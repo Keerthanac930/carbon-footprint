@@ -1,0 +1,57 @@
+{
+  "pre_production": {
+    "script_review": "Review and approve final script",
+    "location_scouting": [
+      "Industrial areas for opening shots",
+      "Clean tech offices for solution scenes",
+      "Green spaces for transformation shots",
+      "Urban areas for before/after comparisons"
+    ],
+    "talent_casting": [
+      "Professional voice-over artist (American accent)",
+      "Diverse group of users for testimonials",
+      "Environmental experts for credibility"
+    ],
+    "equipment_rental": [
+      "4K camera with stabilization",
+      "Professional lighting kit",
+      "High-quality microphones",
+      "Drone for aerial shots"
+    ]
+  },
+  "production": {
+    "shooting_schedule": "3-4 days total",
+    "day_1": "Industrial and problem shots",
+    "day_2": "Technology and solution shots",
+    "day_3": "Transformation and impact shots",
+    "day_4": "Pickup shots and voice-over recording",
+    "safety_considerations": [
+      "Industrial location safety protocols",
+      "Drone flight permits and restrictions",
+      "COVID-19 safety measures for crew"
+    ]
+  },
+  "post_production": {
+    "editing_software": "Adobe Premiere Pro or Final Cut Pro",
+    "color_grading": "Match color palette for consistency",
+    "audio_mixing": "Professional audio mixing and mastering",
+    "motion_graphics": "After Effects for data visualizations",
+    "delivery_formats": [
+      "MP4 for web (1920x1080)",
+      "MOV for broadcast (if needed)",
+      "Social media versions (square, vertical)"
+    ]
+  },
+  "budget_estimate": {
+    "pre_production": "$2,000",
+    "production": "$8,000",
+    "post_production": "$5,000",
+    "total": "$15,000"
+  },
+  "timeline": {
+    "pre_production": "2 weeks",
+    "production": "1 week",
+    "post_production": "3 weeks",
+    "total": "6 weeks"
+  }
+}
