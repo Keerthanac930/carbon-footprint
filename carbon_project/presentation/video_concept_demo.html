@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>From Industry to Green - Video Concept Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a, #2d5016);
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(45deg, #2C2C2C, #1a1a1a);
+        }
+        
+        .video-screen {
+            width: 90%;
+            max-width: 1200px;
+            height: 80vh;
+            background: #000;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        
+        .scene {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+        
+        .scene.active {
+            opacity: 1;
+        }
+        
+        .scene-1 {
+            background: linear-gradient(45deg, #2C2C2C, #666666, #CC0000);
+        }
+        
+        .scene-2 {
+            background: linear-gradient(45deg, #4A4A4A, #888888, #FF6600);
+        }
+        
+        .scene-3 {
+            background: linear-gradient(45deg, #0066CC, #00CCFF, #32CD32);
+        }
+        
+        .scene-4 {
+            background: linear-gradient(45deg, #2E8B57, #32CD32, #90EE90);
+        }
+        
+        .scene-5 {
+            background: linear-gradient(45deg, #32CD32, #90EE90, #98FB98);
+        }
+        
+        .scene-6 {
+            background: linear-gradient(45deg, #90EE90, #98FB98, #F0FFF0);
+        }
+        
+        .scene-content {
+            text-align: center;
+            padding: 40px;
+            max-width: 800px;
+        }
+        
+        .scene-title {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .scene-subtitle {
+            font-size: 1.5em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .scene-description {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-item {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #32CD32;
+        }
+        
+        .stat-label {
+            font-size: 1em;
+            opacity: 0.8;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .control-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: #32CD32;
+        }
+        
+        .control-btn.active {
+            background: #32CD32;
+            border-color: #32CD32;
+        }
+        
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: #32CD32;
+            transition: width 0.5s ease;
+            z-index: 100;
+        }
+        
+        .play-pause {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: rgba(50, 205, 50, 0.8);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        
+        .play-pause:hover {
+            background: rgba(50, 205, 50, 1);
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        
+        .timeline {
+            position: absolute;
+            bottom: 60px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 1px;
+        }
+        
+        .timeline-progress {
+            height: 100%;
+            background: #32CD32;
+            border-radius: 1px;
+            transition: width 0.5s ease;
+        }
+        
+        .voice-over {
+            position: absolute;
+            bottom: 100px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            line-height: 1.4;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .voice-over.active {
+            opacity: 1;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .scene-content > * {
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        .scene-content > *:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .scene-content > *:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        .scene-content > *:nth-child(4) {
+            animation-delay: 0.6s;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <div class="video-screen">
+            <!-- Scene 1: Industrial Reality -->
+            <div class="scene scene-1 active">
+                <div class="scene-content">
+                    <h1 class="scene-title">The Industrial Reality</h1>
+                    <p class="scene-subtitle">Our world at a critical crossroads</p>
+                    <p class="scene-description">
+                        Every second, 1,000 tons of CO2 enters our atmosphere. 
+                        36.8 billion tons annually. The numbers are staggering.
+                    </p>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-number">36.8B</div>
+                            <div class="stat-label">Tons CO2/Year</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">7M</div>
+                            <div class="stat-label">Lives Lost/Year</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">1.1°C</div>
+                            <div class="stat-label">Temperature Rise</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scene 2: The Awakening -->
+            <div class="scene scene-2">
+                <div class="scene-content">
+                    <h1 class="scene-title">The Awakening</h1>
+                    <p class="scene-subtitle">Technology becomes our ally</p>
+                    <p class="scene-description">
+                        Scientists and engineers work tirelessly to solve problems, 
+                        not create them. Machine learning processes millions of data points, 
+                        finding solutions we never knew existed.
+                    </p>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-number">AI</div>
+                            <div class="stat-label">Machine Learning</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">50+</div>
+                            <div class="stat-label">Features Analyzed</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">85%</div>
+                            <div class="stat-label">Accuracy Rate</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scene 3: The Solution -->
+            <div class="scene scene-3">
+                <div class="scene-content">
+                    <h1 class="scene-title">The Solution Emerges</h1>
+                    <p class="scene-subtitle">Carbon Footprint Calculator</p>
+                    <p class="scene-description">
+                        Six comprehensive categories capture every aspect of your lifestyle. 
+                        Real-time calculations powered by advanced machine learning. 
+                        Personalized recommendations tailored specifically to you.
+                    </p>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-number">&lt;2s</div>
+                            <div class="stat-label">Response Time</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">6</div>
+                            <div class="stat-label">Categories</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">Real-time</div>
+                            <div class="stat-label">Calculations</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scene 4: The Transformation -->
+            <div class="scene scene-4">
+                <div class="scene-content">
+                    <h1 class="scene-title">The Transformation</h1>
+                    <p class="scene-subtitle">Awareness becomes action</p>
+                    <p class="scene-description">
+                        Sarah reduced her carbon footprint by 40% in 6 months. 
+                        The Johnson family saved $2,400 annually on energy bills. 
+                        Real people, real results, real change.
+                    </p>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-number">1M</div>
+                            <div class="stat-label">Tons CO2 Prevented</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">500K</div>
+                            <div class="stat-label">Trees Saved</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">2M</div>
+                            <div class="stat-label">Gallons Water Conserved</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scene 5: The Ripple Effect -->
+            <div class="scene scene-5">
+                <div class="scene-content">
+                    <h1 class="scene-title">The Ripple Effect</h1>
+                    <p class="scene-subtitle">Global transformation begins</p>
+                    <p class="scene-description">
+                        One person's action creates a ripple that becomes a wave. 
+                        100+ countries using carbon footprint technology. 
+                        1 billion people with access to environmental tools.
+                    </p>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-number">100+</div>
+                            <div class="stat-label">Countries</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">1B</div>
+                            <div class="stat-label">People Reached</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">50%</div>
+                            <div class="stat-label">Emission Reduction by 2030</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scene 6: Call to Action -->
+            <div class="scene scene-6">
+                <div class="scene-content">
+                    <h1 class="scene-title">The Call to Action</h1>
+                    <p class="scene-subtitle">The future is in your hands</p>
+                    <p class="scene-description">
+                        Every individual has the power to make a difference. 
+                        Technology provides the tools, but action requires you. 
+                        Join millions who are already making a change.
+                    </p>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-number">Today</div>
+                            <div class="stat-label">Start Your Journey</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">Now</div>
+                            <div class="stat-label">Make a Difference</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">Together</div>
+                            <div class="stat-label">Transform Our World</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Voice Over Text -->
+            <div class="voice-over" id="voiceOver">
+                Hi, I'm your carbon footprint assistant. Our world stands at a critical crossroads...
+            </div>
+            
+            <!-- Play/Pause Button -->
+            <button class="play-pause" id="playPause">▶</button>
+            
+            <!-- Timeline -->
+            <div class="timeline">
+                <div class="timeline-progress" id="timelineProgress"></div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="controls">
+                <button class="control-btn active" data-scene="0">Scene 1</button>
+                <button class="control-btn" data-scene="1">Scene 2</button>
+                <button class="control-btn" data-scene="2">Scene 3</button>
+                <button class="control-btn" data-scene="3">Scene 4</button>
+                <button class="control-btn" data-scene="4">Scene 5</button>
+                <button class="control-btn" data-scene="5">Scene 6</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class VideoConceptDemo {
+            constructor() {
+                this.currentScene = 0;
+                this.totalScenes = 6;
+                this.isPlaying = false;
+                this.sceneDuration = 10000; // 10 seconds per scene
+                this.interval = null;
+                
+                this.scenes = document.querySelectorAll('.scene');
+                this.controls = document.querySelectorAll('.control-btn');
+                this.playPauseBtn = document.getElementById('playPause');
+                this.timelineProgress = document.getElementById('timelineProgress');
+                this.voiceOver = document.getElementById('voiceOver');
+                
+                this.voiceOverTexts = [
+                    "Hi, I'm your carbon footprint assistant. Our world stands at a critical crossroads. Every second, 1,000 tons of CO2 enters our atmosphere.",
+                    "In the darkness, a light begins to shine. Scientists and engineers work tirelessly to solve problems, not create them.",
+                    "Meet the future of environmental consciousness. A sleek, intuitive interface that puts the power of change directly in your hands.",
+                    "Watch as awareness transforms into action. Sarah reduced her carbon footprint by 40% in just 6 months. Real people, real results, real change.",
+                    "One person's action creates a ripple that becomes a wave. 100+ countries using carbon footprint technology worldwide.",
+                    "The future is in your hands. Every individual has the power to make a difference. Will you join me in transforming our world?"
+                ];
+                
+                this.init();
+            }
+            
+            init() {
+                this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
+                this.controls.forEach((btn, index) => {
+                    btn.addEventListener('click', () => this.goToScene(index));
+                });
+                
+                this.updateScene();
+            }
+            
+            togglePlayPause() {
+                if (this.isPlaying) {
+                    this.pause();
+                } else {
+                    this.play();
+                }
+            }
+            
+            play() {
+                this.isPlaying = true;
+                this.playPauseBtn.textContent = '⏸';
+                this.interval = setInterval(() => {
+                    this.nextScene();
+                }, this.sceneDuration);
+            }
+            
+            pause() {
+                this.isPlaying = false;
+                this.playPauseBtn.textContent = '▶';
+                clearInterval(this.interval);
+            }
+            
+            nextScene() {
+                this.currentScene = (this.currentScene + 1) % this.totalScenes;
+                this.updateScene();
+            }
+            
+            goToScene(sceneIndex) {
+                this.currentScene = sceneIndex;
+                this.updateScene();
+            }
+            
+            updateScene() {
+                // Update scenes
+                this.scenes.forEach((scene, index) => {
+                    scene.classList.toggle('active', index === this.currentScene);
+                });
+                
+                // Update controls
+                this.controls.forEach((btn, index) => {
+                    btn.classList.toggle('active', index === this.currentScene);
+                });
+                
+                // Update voice over
+                this.voiceOver.textContent = this.voiceOverTexts[this.currentScene];
+                this.voiceOver.classList.remove('active');
+                setTimeout(() => {
+                    this.voiceOver.classList.add('active');
+                }, 100);
+                
+                // Update timeline
+                const progress = ((this.currentScene + 1) / this.totalScenes) * 100;
+                this.timelineProgress.style.width = `${progress}%`;
+            }
+        }
+        
+        // Initialize the demo when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new VideoConceptDemo();
+        });
+    </script>
+</body>
+</html>

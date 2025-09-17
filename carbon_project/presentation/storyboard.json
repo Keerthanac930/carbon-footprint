@@ -1,0 +1,93 @@
+[
+  {
+    "scene": 1,
+    "shot": "Opening wide shot of industrial cityscape",
+    "duration": "15 seconds",
+    "camera_movement": "Slow zoom in on smokestacks",
+    "visual_elements": [
+      "Dark, polluted sky",
+      "Smokestacks emitting dark clouds",
+      "Industrial buildings in silhouette",
+      "Text overlay: '36.8 billion tons of CO2 annually'"
+    ],
+    "audio": "Industrial ambient sounds, somber music"
+  },
+  {
+    "scene": 1,
+    "shot": "Close-up of data visualization",
+    "duration": "20 seconds",
+    "camera_movement": "Static with animated data",
+    "visual_elements": [
+      "Animated charts showing rising CO2 levels",
+      "Temperature graphs with alarming trends",
+      "Species extinction counters",
+      "Air pollution statistics"
+    ],
+    "audio": "Building tension in music"
+  },
+  {
+    "scene": 2,
+    "shot": "Transition to technology lab",
+    "duration": "15 seconds",
+    "camera_movement": "Smooth transition, fade to bright",
+    "visual_elements": [
+      "Scientists working on computers",
+      "Data streams flowing across screens",
+      "Machine learning visualizations",
+      "Hope emerging from darkness"
+    ],
+    "audio": "Transitional music, building hope"
+  },
+  {
+    "scene": 3,
+    "shot": "Product demonstration",
+    "duration": "30 seconds",
+    "camera_movement": "Screen recording style",
+    "visual_elements": [
+      "Carbon footprint calculator interface",
+      "User filling out the multi-step form",
+      "Real-time calculations appearing",
+      "Results visualization with charts"
+    ],
+    "audio": "Uplifting tech music, interface sounds"
+  },
+  {
+    "scene": 4,
+    "shot": "Before and after transformation",
+    "duration": "25 seconds",
+    "camera_movement": "Split screen, then merge",
+    "visual_elements": [
+      "Left: Polluted city, right: Clean city",
+      "People wearing masks vs. breathing clean air",
+      "Dead trees vs. thriving green spaces",
+      "Dark skies vs. clear blue skies"
+    ],
+    "audio": "Triumphant orchestral music"
+  },
+  {
+    "scene": 5,
+    "shot": "Global impact visualization",
+    "duration": "20 seconds",
+    "camera_movement": "Zoom out from local to global",
+    "visual_elements": [
+      "Map showing global carbon reduction",
+      "Connecting lines between cities",
+      "Ripple effects spreading worldwide",
+      "Green energy symbols appearing globally"
+    ],
+    "audio": "Inspiring global music"
+  },
+  {
+    "scene": 6,
+    "shot": "Call to action with contact info",
+    "duration": "25 seconds",
+    "camera_movement": "Static with animated text",
+    "visual_elements": [
+      "Website URL and app download links",
+      "Social media handles",
+      "QR code for easy access",
+      "Final inspiring message"
+    ],
+    "audio": "Motivational music, clear voice-over"
+  }
+]

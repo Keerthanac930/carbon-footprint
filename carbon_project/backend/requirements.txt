@@ -1,0 +1,49 @@
+# Core ML libraries
+scikit-learn>=1.4.0
+pandas>=2.1.0
+numpy>=1.25.0
+xgboost>=1.7.6
+lightgbm>=4.0.0
+
+# Data preprocessing
+category-encoders>=2.6.1
+
+# Visualization and analysis
+matplotlib>=3.7.2
+seaborn>=0.12.2
+plotly>=5.15.0
+
+# Model evaluation
+scipy>=1.11.1
+joblib>=1.3.2
+
+# API and web framework
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+
+# Database
+sqlalchemy>=2.0.23
+pymysql>=1.1.0
+cryptography>=41.0.7
+
+# Simple authentication
+python-multipart>=0.0.6
+
+# Email validation
+email-validator>=2.1.0
+
+# HTTP client
+httpx>=0.25.2
+
+# Utilities
+python-dotenv>=1.0.0
+tqdm>=4.65.0
+
+# Build tools (needed for Python 3.13)
+setuptools>=68.0.0
+wheel>=0.40.0
+
+# Development and testing
+pytest>=7.4.3
+pytest-asyncio>=0.21.1
