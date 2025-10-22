@@ -30,6 +30,7 @@ yarn-debug.log*
 yarn-error.log*
 .cache/
 build/
+package-lock.json
 
 # IDEs
 .vscode/
@@ -59,10 +60,12 @@ Thumbs.db
 htmlcov/
 .pytest_cache/
 
-# Models (optional - comment out if you want to track ML models)
-# *.pkl
-# *.h5
-# *.pth
+# Models (too large for GitHub)
+*.pkl
+*.h5
+*.pth
+**/models/*.pkl
+**/ml/models/
 
 # Temporary files
 *.tmp
