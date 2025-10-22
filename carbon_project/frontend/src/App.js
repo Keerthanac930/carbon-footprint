@@ -18,6 +18,7 @@ import { initScrollAnimations } from './utils/scrollAnimations';
 import DashboardLayout from './components/Dashboard/DashboardLayout';
 import DashboardHome from './components/Dashboard/DashboardHome';
 import ResultsPage from './components/Dashboard/ResultsPage';
+import NewsFeed from './components/Dashboard/NewsFeed';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -105,8 +106,10 @@ function App() {
               {/* Results Page */}
               <Route path="results" element={<ResultsPage />} />
               
-              {/* Placeholder routes for other features (Phase 3+) */}
-              <Route path="news" element={<div className="p-6 text-center text-gray-500">News Feed - Coming Soon</div>} />
+              {/* News Feed (Phase 4) */}
+              <Route path="news" element={<NewsFeed />} />
+              
+              {/* Placeholder routes for other features (Phase 5+) */}
               <Route path="ocr" element={<div className="p-6 text-center text-gray-500">OCR Bill Scanner - Coming Soon</div>} />
               <Route path="chat" element={<div className="p-6 text-center text-gray-500">AI Chatbot - Coming Soon</div>} />
               <Route path="goals" element={<div className="p-6 text-center text-gray-500">Goals - Coming Soon</div>} />
