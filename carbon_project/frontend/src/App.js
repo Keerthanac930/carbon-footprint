@@ -17,6 +17,7 @@ import { initScrollAnimations } from './utils/scrollAnimations';
 // New Dashboard Layout Components
 import DashboardLayout from './components/Dashboard/DashboardLayout';
 import DashboardHome from './components/Dashboard/DashboardHome';
+import ResultsPage from './components/Dashboard/ResultsPage';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -100,6 +101,9 @@ function App() {
               
               {/* Calculator */}
               <Route path="calculator" element={<CarbonCalculator />} />
+              
+              {/* Results Page */}
+              <Route path="results" element={<ResultsPage />} />
               
               {/* Placeholder routes for other features (Phase 3+) */}
               <Route path="news" element={<div className="p-6 text-center text-gray-500">News Feed - Coming Soon</div>} />

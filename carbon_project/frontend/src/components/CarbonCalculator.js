@@ -514,8 +514,8 @@ const CarbonCalculator = () => {
       // Reset form after successful submission
       resetForm();
       
-      // Navigate to results page
-      navigate('/results');
+      // Navigate to new dashboard results page
+      navigate('/dashboard/results');
     } catch (error) {
       console.error('Error calculating carbon footprint:', error);
       alert('Error calculating carbon footprint: ' + error.message);
