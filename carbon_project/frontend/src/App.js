@@ -19,6 +19,13 @@ import DashboardLayout from './components/Dashboard/DashboardLayout';
 import DashboardHome from './components/Dashboard/DashboardHome';
 import ResultsPage from './components/Dashboard/ResultsPage';
 import NewsFeed from './components/Dashboard/NewsFeed';
+import Rewards from './components/Dashboard/Rewards';
+import OCRScanner from './components/Dashboard/OCRScanner';
+import Chatbot from './components/Dashboard/Chatbot';
+import GlobalStats from './components/Dashboard/GlobalStats';
+import Goals from './components/Dashboard/Goals';
+import Community from './components/Dashboard/Community';
+import DigitalAvatar from './components/Dashboard/DigitalAvatar';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -109,13 +116,28 @@ function App() {
               {/* News Feed (Phase 4) */}
               <Route path="news" element={<NewsFeed />} />
               
-              {/* Placeholder routes for other features (Phase 5+) */}
-              <Route path="ocr" element={<div className="p-6 text-center text-gray-500">OCR Bill Scanner - Coming Soon</div>} />
-              <Route path="chat" element={<div className="p-6 text-center text-gray-500">AI Chatbot - Coming Soon</div>} />
-              <Route path="goals" element={<div className="p-6 text-center text-gray-500">Goals - Coming Soon</div>} />
-              <Route path="rewards" element={<div className="p-6 text-center text-gray-500">Rewards - Coming Soon</div>} />
-              <Route path="community" element={<div className="p-6 text-center text-gray-500">Community - Coming Soon</div>} />
-              <Route path="insights" element={<div className="p-6 text-center text-gray-500">Insights - Coming Soon</div>} />
+              {/* Gamification (Phase 5) */}
+              <Route path="rewards" element={<Rewards />} />
+              
+              {/* OCR Scanner (Phase 7) */}
+              <Route path="ocr" element={<OCRScanner />} />
+              
+              {/* AI Chatbot (Phase 8) */}
+              <Route path="chat" element={<Chatbot />} />
+              
+              {/* Global Stats (Phase 9) */}
+              <Route path="insights" element={<GlobalStats />} />
+              
+              {/* Goals (Phase 12) */}
+              <Route path="goals" element={<Goals />} />
+              
+              {/* Community (Phase 13) */}
+              <Route path="community" element={<Community />} />
+              
+              {/* Digital Avatar (Phase 6) */}
+              <Route path="avatar" element={<DigitalAvatar />} />
+              
+              {/* Placeholder routes for future features */}
               <Route path="settings" element={<div className="p-6 text-center text-gray-500">Settings - Coming Soon</div>} />
             </Route>
             
