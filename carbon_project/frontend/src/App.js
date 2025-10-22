@@ -1,17 +1,22 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 import CarbonCalculator from './components/CarbonCalculator';
 import Results from './components/Results';
 import DigitalTwinDashboard from './components/DigitalTwinDashboard';
 import SignIn from './components/SignIn';
 import SignUp from './components/SignUp';
+import LoginPage from './components/LoginPage';
 import UserDashboard from './components/UserDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import FloatingElements from './components/FloatingElements';
 import VoiceAssistant from './components/VoiceAssistant';
 import { AuthProvider } from './contexts/AuthContext';
 import { initScrollAnimations } from './utils/scrollAnimations';
+
+// New Dashboard Layout Components
+import DashboardLayout from './components/Dashboard/DashboardLayout';
+import DashboardHome from './components/Dashboard/DashboardHome';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -77,25 +82,39 @@ function App() {
         <VoiceAssistant />
         <Router>
           <Routes>
-            <Route path="/" element={<SignIn />} />
+            {/* Public Routes */}
+            <Route path="/" element={<LoginPage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/results" element={<Results />} />
+            
+            {/* Protected Dashboard Routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
-                <UserDashboard />
+                <DashboardLayout />
               </ProtectedRoute>
-            } />
-            <Route path="/calculator" element={
-              <ProtectedRoute>
-                <CarbonCalculator />
-              </ProtectedRoute>
-            } />
-            <Route path="/carbon-footprint" element={
-              <ProtectedRoute>
-                <CarbonCalculator />
-              </ProtectedRoute>
-            } />
-            <Route path="/results" element={<Results />} />
+            }>
+              {/* Dashboard Home */}
+              <Route index element={<DashboardHome />} />
+              
+              {/* Calculator */}
+              <Route path="calculator" element={<CarbonCalculator />} />
+              
+              {/* Placeholder routes for other features (Phase 3+) */}
+              <Route path="news" element={<div className="p-6 text-center text-gray-500">News Feed - Coming Soon</div>} />
+              <Route path="ocr" element={<div className="p-6 text-center text-gray-500">OCR Bill Scanner - Coming Soon</div>} />
+              <Route path="chat" element={<div className="p-6 text-center text-gray-500">AI Chatbot - Coming Soon</div>} />
+              <Route path="goals" element={<div className="p-6 text-center text-gray-500">Goals - Coming Soon</div>} />
+              <Route path="rewards" element={<div className="p-6 text-center text-gray-500">Rewards - Coming Soon</div>} />
+              <Route path="community" element={<div className="p-6 text-center text-gray-500">Community - Coming Soon</div>} />
+              <Route path="insights" element={<div className="p-6 text-center text-gray-500">Insights - Coming Soon</div>} />
+              <Route path="settings" element={<div className="p-6 text-center text-gray-500">Settings - Coming Soon</div>} />
+            </Route>
+            
+            {/* Legacy Routes (for backward compatibility) */}
+            <Route path="/calculator" element={<Navigate to="/dashboard/calculator" replace />} />
+            <Route path="/carbon-footprint" element={<Navigate to="/dashboard/calculator" replace />} />
             <Route path="/digital-twin" element={
               <ProtectedRoute>
                 <DigitalTwinDashboard />
