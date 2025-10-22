@@ -7,7 +7,6 @@ import DigitalTwinDashboard from './components/DigitalTwinDashboard';
 import SignIn from './components/SignIn';
 import SignUp from './components/SignUp';
 import LoginPage from './components/LoginPage';
-import UserDashboard from './components/UserDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import FloatingElements from './components/FloatingElements';
 import VoiceAssistant from './components/VoiceAssistant';
