@@ -28,11 +28,11 @@ const AdminPanel = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat, idx) => {
-          const encouraged = stat.icon;
+          const IconComponent = stat.icon;
           return (
             <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }} className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg">
               <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mb-4`}>
-                <encouraged className="text-white" size={24} />
+                <IconComponent className="text-white" size={24} />
               </div>
               <h3 className="text-gray-600 dark:text-gray-400 text-sm mb-1">{stat.label}</h3>
               <p className="text-3xl font-bold text-gray-800 dark:text-white">{stat.value}</p>

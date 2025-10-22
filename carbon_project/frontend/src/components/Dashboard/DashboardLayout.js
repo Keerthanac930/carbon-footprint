@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  FiHome, FiCalculator, FiFileText, FiCamera, FiMessageCircle,
+  FiHome, FiEdit, FiFileText, FiCamera, FiMessageCircle,
   FiTarget, FiAward, FiUsers, FiTrendingUp, FiSettings,
   FiLogOut, FiMenu, FiX, FiUser, FiBell, FiSun, FiMoon
 } from 'react-icons/fi';
@@ -31,7 +31,7 @@ const DashboardLayout = () => {
 
   const menuItems = [
     { path: '/dashboard', icon: FiHome, label: 'Dashboard', color: '#4CAF50' },
-    { path: '/dashboard/calculator', icon: FiCalculator, label: 'Calculator', color: '#2196F3' },
+    { path: '/dashboard/calculator', icon: FiEdit, label: 'Calculator', color: '#2196F3' },
     { path: '/dashboard/results', icon: FiTrendingUp, label: 'Results', color: '#9C27B0' },
     { path: '/dashboard/news', icon: FiFileText, label: 'News Feed', color: '#FF9800' },
     { path: '/dashboard/rewards', icon: FiAward, label: 'Rewards', color: '#FFD700' },

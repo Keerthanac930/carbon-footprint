@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FiUsers, FiTrophy, FiHeart } from 'react-icons/fi';
+import { FiUsers } from 'react-icons/fi';
 
 const Community = () => {
   const leaderboard = [

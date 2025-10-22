@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   FiTrendingUp, FiTrendingDown, FiActivity, FiTarget,
-  FiAward, FiCalendar, FiZap, FiLeaf
+  FiAward, FiCalendar, FiZap, FiHeart
 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import CarbonFootprintAPI from '../../services/api';
@@ -244,7 +244,7 @@ const DashboardHome = () => {
             className="flex items-center space-x-4 p-4 bg-gradient-to-r from-purple-400 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg transition-shadow"
           >
             <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-              <FiLeaf size={24} />
+              <FiHeart size={24} />
             </div>
             <div className="text-left">
               <h3 className="font-semibold">View Insights</h3>

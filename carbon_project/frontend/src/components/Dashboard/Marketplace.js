@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FiShoppingCart, FiDollarSign, FiTrendingDown } from 'react-icons/fi';
+import { FiShoppingCart } from 'react-icons/fi';
 
 const Marketplace = () => {
   const projects = [

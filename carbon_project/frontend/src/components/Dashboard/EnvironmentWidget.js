@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiWind, FiDroplet, FiSun, FiThermometer } from 'react-icons/fi';
 
 const EnvironmentWidget = () => {
-  const [data, setData] = useState({
+  const [data] = useState({
     aqi: 85,
     temp: 28,
     humidity: 65,
