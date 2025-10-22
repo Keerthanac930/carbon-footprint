@@ -26,6 +26,10 @@ import GlobalStats from './components/Dashboard/GlobalStats';
 import Goals from './components/Dashboard/Goals';
 import Community from './components/Dashboard/Community';
 import DigitalAvatar from './components/Dashboard/DigitalAvatar';
+import EnvironmentWidget from './components/Dashboard/EnvironmentWidget';
+import AdminPanel from './components/Dashboard/AdminPanel';
+import Marketplace from './components/Dashboard/Marketplace';
+import VoiceAssistantPage from './components/Dashboard/VoiceAssistant';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -137,7 +141,19 @@ function App() {
               {/* Digital Avatar (Phase 6) */}
               <Route path="avatar" element={<DigitalAvatar />} />
               
-              {/* Placeholder routes for future features */}
+              {/* Environment Widget (Phase 14) */}
+              <Route path="environment" element={<EnvironmentWidget />} />
+              
+              {/* Marketplace (Phase 18) */}
+              <Route path="marketplace" element={<Marketplace />} />
+              
+              {/* Voice Assistant (Phase 19) */}
+              <Route path="voice" element={<VoiceAssistantPage />} />
+              
+              {/* Admin Panel (Phase 20) */}
+              <Route path="admin" element={<AdminPanel />} />
+              
+              {/* Settings */}
               <Route path="settings" element={<div className="p-6 text-center text-gray-500">Settings - Coming Soon</div>} />
             </Route>
             
