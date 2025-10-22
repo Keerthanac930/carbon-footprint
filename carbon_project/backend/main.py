@@ -71,6 +71,10 @@ class CarbonPredictionResponse(BaseModel):
 async def root():
     return {"message": "Carbon Emission Prediction API", "status": "running"}
 
+@app.get("/test-auth")
+async def test_auth():
+    return {"message": "Auth endpoints are accessible", "endpoints": ["/auth/login", "/auth/register"]}
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "message": "API is running"}

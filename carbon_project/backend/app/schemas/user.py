@@ -8,7 +8,13 @@ class UserBase(BaseModel):
     name: str
 
 class UserCreate(UserBase):
-    pass
+    password: str
+    
+    @validator('password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        return v
 
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
@@ -25,6 +31,7 @@ class UserResponse(UserBase):
 class LoginRequest(BaseModel):
     email: EmailStr
     name: str
+    password: str
 
 class LoginResponse(BaseModel):
     session_token: str

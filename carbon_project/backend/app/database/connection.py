@@ -4,11 +4,15 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 import os
 from typing import Generator
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Database configuration
 DATABASE_URL = os.getenv(
     "DATABASE_URL", 
-    "mysql+pymysql://carbon_user:secure_password@localhost:3306/carbon_footprint_db"
+    "mysql+pymysql://root:Keerthu%4073380@localhost:3306/carbon_footprint_db"
 )
 
 # Create engine with connection pooling
@@ -42,6 +46,10 @@ def create_tables():
     """
     Create all tables in the database
     """
+    # Import models to register them with Base.metadata
+    from ..models.user import User, UserSession
+    from ..models.carbon_footprint import CarbonFootprint, Recommendation, UserGoal, AuditLog
+    
     Base.metadata.create_all(bind=engine)
 
 def drop_tables():

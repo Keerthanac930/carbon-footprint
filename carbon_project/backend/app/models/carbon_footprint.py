@@ -1,11 +1,9 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, JSON, Boolean, DECIMAL, ForeignKey, Enum
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from enum import Enum as PyEnum
 import uuid
-
-Base = declarative_base()
+from ..database.connection import Base
 
 class PriorityEnum(PyEnum):
     HIGH = "high"

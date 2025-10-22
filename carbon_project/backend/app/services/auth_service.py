@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from fastapi import HTTPException, status
 import secrets
+import bcrypt
 
 from ..repositories.user_repository import UserRepository, UserSessionRepository
 from ..schemas.user import LoginRequest, LoginResponse, UserCreate, UserResponse
@@ -16,14 +17,33 @@ class AuthService:
         """Create a simple session token"""
         return secrets.token_urlsafe(32)
     
+    def hash_password(self, password: str) -> str:
+        """Hash password using bcrypt"""
+        salt = bcrypt.gensalt()
+        return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+    
+    def verify_password(self, password: str, hashed: str) -> bool:
+        """Verify password against hash"""
+        return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+    
     def login(self, login_data: LoginRequest) -> LoginResponse:
-        """User login - simple email/name based"""
-        # Check if user exists, if not create them
+        """User login with password authentication - ONLY for registered users"""
+        # Check if user exists
         user = self.user_repo.get_user_by_email(login_data.email)
+        
+        # Reject login if user doesn't exist - specific error message
         if not user:
-            # Create new user
-            user_data = UserCreate(email=login_data.email, name=login_data.name)
-            user = self.user_repo.create_user(user_data)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Email not found. Please register first or check your email address."
+            )
+        
+        # Verify password for existing user - specific error message
+        if not self.verify_password(login_data.password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect password. Please try again."
+            )
         
         # Create session token
         session_token = self.create_session_token()
@@ -51,8 +71,18 @@ class AuthService:
                 detail="Email already registered"
             )
         
+        # Hash password and create new UserCreate object
+        hashed_password = self.hash_password(user_data.password)
+        
+        # Create UserCreate with hashed password (validates hash length > 8)
+        hashed_user_data = UserCreate(
+            email=user_data.email,
+            name=user_data.name,
+            password=hashed_password
+        )
+        
         # Create user
-        user = self.user_repo.create_user(user_data)
+        user = self.user_repo.create_user(hashed_user_data)
         return UserResponse.from_orm(user)
     
     def logout(self, session_token: str) -> bool:

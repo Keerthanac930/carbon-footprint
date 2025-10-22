@@ -1,8 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
-
-Base = declarative_base()
+from ..database.connection import Base
 
 class User(Base):
     __tablename__ = "users"
@@ -10,6 +8,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     name = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=func.now())
 
 class UserSession(Base):

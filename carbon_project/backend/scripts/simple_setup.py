@@ -8,6 +8,10 @@ import sys
 import pymysql
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add the parent directory to the path so we can import our modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

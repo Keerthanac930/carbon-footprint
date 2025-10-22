@@ -418,12 +418,32 @@ const Results = () => {
               </RecommendationCard>
             ))
           ) : (
-            results.recommendations?.map((rec, index) => (
-              <RecommendationCard key={index}>
-                <RecommendationTitle>Recommendation {index + 1}</RecommendationTitle>
-                <RecommendationText>{rec}</RecommendationText>
-              </RecommendationCard>
-            )) || []
+            results.recommendations?.map((rec, index) => {
+              // Handle different recommendation formats
+              const isString = typeof rec === 'string';
+              const category = isString ? `Recommendation ${index + 1}` : (rec.category || `Recommendation ${index + 1}`);
+              const action = isString ? rec : (rec.action || rec.description || 'No recommendation details');
+              const savings = isString ? null : rec.potential_savings;
+              
+              return (
+                <RecommendationCard key={index}>
+                  <RecommendationTitle>{category}</RecommendationTitle>
+                  <RecommendationText>
+                    {action}
+                  </RecommendationText>
+                  {savings && typeof savings === 'number' && (
+                    <div style={{ marginTop: '10px', color: '#4CAF50', fontWeight: '600' }}>
+                      Potential savings: {savings.toFixed(1)} kg CO2e/month
+                    </div>
+                  )}
+                  {savings && typeof savings === 'string' && (
+                    <div style={{ marginTop: '10px', color: '#4CAF50', fontWeight: '600' }}>
+                      Potential savings: {savings}
+                    </div>
+                  )}
+                </RecommendationCard>
+              );
+            }) || []
           )}
         </RecommendationsList>
       </RecommendationsSection>

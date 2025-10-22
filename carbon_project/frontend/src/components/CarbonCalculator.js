@@ -385,6 +385,7 @@ const CarbonCalculator = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [currentStep, setCurrentStep] = useState(0);
 
+
   useEffect(() => {
     setProgress(calculateProgress(formData));
   }, [formData]);
@@ -532,16 +533,36 @@ const CarbonCalculator = () => {
       
       // Transform form data to match API format
       const individualData = {
-        monthly_electricity: formData.electricity_usage_kwh || 0,
-        monthly_transport: (formData.vehicles?.reduce((total, vehicle) => {
-          return total + (vehicle.monthly_distance_km * 0.2); // 0.2 kg CO2e per km
-        }, 0) || 0) + (formData.walking_cycling_distance_km * 0.05),
-        monthly_waste: (formData.waste_per_person * 4 * formData.household_size) || 0,
-        monthly_shopping: formData.monthly_grocery_bill * 0.0005 || 0,
-        diet_type: formData.meat_consumption || 'vegetarian',
-        heating_type: formData.heating_energy_source || 'electric',
-        monthly_heating: (formData.electricity_usage_kwh * 0.3) || 0,
-        monthly_water: (formData.household_size * 100 * 0.0003) || 0
+        household_size: formData.household_size || 4,
+        electricity_usage_kwh: formData.electricity_usage_kwh || 500,
+        home_size_sqft: formData.home_size_sqft || 1200,
+        home_type: formData.home_type || 'apartment',
+        heating_energy_source: formData.heating_energy_source || 'electric',
+        cooling_energy_source: formData.cooling_energy_source || 'electric',
+        vehicle_type: formData.vehicles?.[0]?.type || 'gasoline',
+        fuel_type: formData.vehicles?.[0]?.fuel_type || 'gasoline',
+        climate_zone: formData.climate_zone || 'moderate',
+        meat_consumption: formData.meat_consumption || 'medium',
+        cooking_method: formData.cooking_method || 'gas',
+        recycling_practice: formData.recycling_practice || 'regular',
+        income_level: formData.income_level || 'medium',
+        location_type: formData.location_type || 'urban',
+        vehicle_monthly_distance_km: formData.vehicles?.[0]?.monthly_distance_km || 500,
+        vehicles_per_household: formData.vehicles?.length || 1,
+        monthly_grocery_bill: formData.monthly_grocery_bill || 15000,
+        waste_per_person: formData.waste_per_person || 2,
+        air_travel_hours: formData.air_travel_hours || 10,
+        heating_efficiency: formData.heating_efficiency || 0.8,
+        cooling_efficiency: formData.cooling_efficiency || 0.7,
+        heating_days: formData.heating_days || 30,
+        cooling_days: formData.cooling_days || 120,
+        waste_bag_weekly_count: formData.waste_bag_weekly_count || 2,
+        new_clothes_monthly: formData.new_clothes_monthly || 1,
+        recycling_rate: formData.recycling_rate || 0.6,
+        composting_rate: formData.composting_rate || 0.2,
+        fuel_efficiency: formData.fuel_efficiency || 15,
+        fuel_usage_liters: formData.fuel_usage_liters || 30,
+        home_age: formData.home_age || 10
       };
 
       const result = await api.predictIndividual(individualData);

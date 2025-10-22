@@ -10,6 +10,7 @@ CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(255) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     INDEX idx_email (email)
@@ -234,7 +235,7 @@ END //
 CREATE PROCEDURE CleanupExpiredSessions()
 BEGIN
     DELETE FROM user_sessions 
-    WHERE expires_at < NOW() OR is_active = FALSE;
+    WHERE expires_at < NOW();
 END //
 
 DELIMITER ;
@@ -247,7 +248,7 @@ AFTER INSERT ON users
 FOR EACH ROW
 BEGIN
     INSERT INTO audit_logs (user_id, action, table_name, record_id, new_values, created_at)
-    VALUES (NEW.id, 'INSERT', 'users', NEW.id, JSON_OBJECT('email', NEW.email, 'username', NEW.username), NOW());
+    VALUES (NEW.id, 'INSERT', 'users', NEW.id, JSON_OBJECT('email', NEW.email, 'name', NEW.name), NOW());
 END //
 
 CREATE TRIGGER users_audit_update
@@ -256,8 +257,8 @@ FOR EACH ROW
 BEGIN
     INSERT INTO audit_logs (user_id, action, table_name, record_id, old_values, new_values, created_at)
     VALUES (NEW.id, 'UPDATE', 'users', NEW.id, 
-            JSON_OBJECT('email', OLD.email, 'username', OLD.username, 'is_active', OLD.is_active),
-            JSON_OBJECT('email', NEW.email, 'username', NEW.username, 'is_active', NEW.is_active),
+            JSON_OBJECT('email', OLD.email, 'name', OLD.name),
+            JSON_OBJECT('email', NEW.email, 'name', NEW.name),
             NOW());
 END //
 

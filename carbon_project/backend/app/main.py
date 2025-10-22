@@ -28,24 +28,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize the predictor with correct paths
-current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-model_path = os.path.join(current_dir, "app", "ml", "models", "v3_carbon_emission_model_minimal.pkl")
-preprocessor_path = os.path.join(current_dir, "app", "ml", "models", "v3_preprocessor.pkl")
+# Global predictor variable (will be initialized on startup)
+predictor = None
 
-predictor = CarbonEmissionPredictorFixed(
-    model_path=model_path,
-    preprocessor_path=preprocessor_path
-)
-
-# Create database tables on startup
+# Create database tables and load ML model on startup
 @app.on_event("startup")
 async def startup_event():
+    global predictor
+    
+    print("🚀 Starting Carbon Footprint API...")
+    print("=" * 60)
+    
+    # Initialize database tables
     try:
         create_tables()
         print("✅ Database tables created/verified")
     except Exception as e:
         print(f"⚠️  Database initialization warning: {e}")
+    
+    # Load ML model (this is the heavy part)
+    try:
+        print("📦 Loading ML model...")
+        current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        model_path = os.path.join(current_dir, "app", "ml", "models", "v3_carbon_emission_model_minimal.pkl")
+        preprocessor_path = os.path.join(current_dir, "app", "ml", "models", "v3_preprocessor.pkl")
+        
+        predictor = CarbonEmissionPredictorFixed(
+            model_path=model_path,
+            preprocessor_path=preprocessor_path
+        )
+        print("✅ ML model loaded successfully")
+    except Exception as e:
+        print(f"❌ Failed to load ML model: {e}")
+        print("⚠️  Prediction endpoints will not work until model is loaded")
+    
+    print("=" * 60)
+    print("✅ Backend ready on http://localhost:8000")
+    print("📋 API Documentation: http://localhost:8000/docs")
+    print("🔗 Test endpoint: http://localhost:8000/ping")
+    print("=" * 60)
 
 # Include API routers
 from app.api.auth import router as auth_router
@@ -96,6 +117,11 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "message": "API is running"}
+
+@app.get("/ping")
+async def ping():
+    """Simple ping endpoint for connectivity testing"""
+    return {"status": "ok", "message": "pong"}
 
 @app.post("/predict", response_model=CarbonPredictionResponse)
 async def predict_carbon_emissions(request: CarbonPredictionRequest):
