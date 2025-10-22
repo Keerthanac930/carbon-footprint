@@ -10,7 +10,21 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Load dark mode preference from localStorage
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  // Apply dark mode to document
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,14 +32,16 @@ const DashboardLayout = () => {
   const menuItems = [
     { path: '/dashboard', icon: FiHome, label: 'Dashboard', color: '#4CAF50' },
     { path: '/dashboard/calculator', icon: FiCalculator, label: 'Calculator', color: '#2196F3' },
+    { path: '/dashboard/results', icon: FiTrendingUp, label: 'Results', color: '#9C27B0' },
     { path: '/dashboard/news', icon: FiFileText, label: 'News Feed', color: '#FF9800' },
+    { path: '/dashboard/rewards', icon: FiAward, label: 'Rewards', color: '#FFD700' },
+    { path: '/dashboard/goals', icon: FiTarget, label: 'My Goals', color: '#F44336' },
     { path: '/dashboard/ocr', icon: FiCamera, label: 'Bill Scanner', color: '#9C27B0' },
     { path: '/dashboard/chat', icon: FiMessageCircle, label: 'AI Chatbot', color: '#00BCD4' },
-    { path: '/dashboard/goals', icon: FiTarget, label: 'My Goals', color: '#F44336' },
-    { path: '/dashboard/rewards', icon: FiAward, label: 'Rewards', color: '#FFD700' },
+    { path: '/dashboard/insights', icon: FiTrendingUp, label: 'Global Stats', color: '#3F51B5' },
     { path: '/dashboard/community', icon: FiUsers, label: 'Community', color: '#8BC34A' },
-    { path: '/dashboard/insights', icon: FiTrendingUp, label: 'Insights', color: '#3F51B5' },
-    { path: '/dashboard/settings', icon: FiSettings, label: 'Settings', color: '#607D8B' },
+    { path: '/dashboard/marketplace', icon: FiSettings, label: 'Marketplace', color: '#10B981' },
+    { path: '/dashboard/admin', icon: FiSettings, label: 'Admin', color: '#607D8B' },
   ];
 
   const handleLogout = async () => {
