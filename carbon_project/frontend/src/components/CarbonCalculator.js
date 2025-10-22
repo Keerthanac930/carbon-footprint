@@ -317,43 +317,28 @@ const SubmitButton = styled.div`
 const CarbonCalculator = () => {
   const navigate = useNavigate();
   
-  // Define default form data as a memoized constant
+  // Define EMPTY form data for fresh sessions (as per Phase 1 requirements)
   const defaultFormData = useMemo(() => ({
-    household_size: 4,
-    home_size_sqft: 1200,
-    home_type: 'apartment',
-    home_age: 10,
-    electricity_usage_kwh: 300,
-    heating_energy_source: 'electric',
-    cooling_energy_source: 'ac',
-    walking_cycling_distance_km: 50,
-    vehicles: [
-      {
-        id: 1,
-        type: 'motorcycle',
-        fuel_type: 'petrol',
-        monthly_distance_km: 300,
-        name: 'My Motorcycle'
-      },
-      {
-        id: 2,
-        type: 'bicycle',
-        fuel_type: 'human_power',
-        monthly_distance_km: 50,
-        name: 'My Bicycle'
-      }
-    ],
-    public_transport_usage: 'weekly',
-    climate_zone: 'tropical',
-    meat_consumption: 'vegetarian',
-    air_travel_hours: 10,
-    cooking_method: 'gas',
-    monthly_grocery_bill: 15000,
-    waste_per_person: 2,
-    recycling_practice: 'yes',
-    income_level: 'low',
-    location_type: 'urban',
-    // Hidden fields with default values
+    household_size: '',
+    home_size_sqft: '',
+    home_type: '',
+    home_age: '',
+    electricity_usage_kwh: '',
+    heating_energy_source: '',
+    cooling_energy_source: '',
+    walking_cycling_distance_km: '',
+    vehicles: [],
+    public_transport_usage: '',
+    climate_zone: '',
+    meat_consumption: '',
+    air_travel_hours: '',
+    cooking_method: '',
+    monthly_grocery_bill: '',
+    waste_per_person: '',
+    recycling_practice: '',
+    income_level: '',
+    location_type: '',
+    // Hidden fields with sensible defaults for calculation
     heating_efficiency: 0.8,
     cooling_efficiency: 0.7,
     heating_days: 30,
@@ -370,7 +355,7 @@ const CarbonCalculator = () => {
     home_efficiency: 0.75,
     climate_impact_factor: 1.2,
     lifestyle_impact_score: 0.6,
-    waste_bag_size: 0,
+    waste_bag_size: 40,
     shopping_frequency: 'weekly',
     social_activity: 'medium',
     public_transport_availability: 'good',
@@ -390,75 +375,25 @@ const CarbonCalculator = () => {
     setProgress(calculateProgress(formData));
   }, [formData]);
 
-  // Function to reset form to empty values
+  // Function to reset form to EMPTY values (Phase 1 requirement)
   const resetForm = useCallback(() => {
-    const emptyFormData = {
-      household_size: 3,
-      home_size_sqft: 1200,
-      home_type: 'apartment',
-      home_age: 10,
-      electricity_usage_kwh: 300,
-      heating_energy_source: 'electric',
-      cooling_energy_source: 'ac',
-      walking_cycling_distance_km: 50,
-      vehicles: [
-        {
-          id: 1,
-          type: 'motorcycle',
-          fuel_type: 'petrol',
-          monthly_distance_km: 300,
-          name: 'My Motorcycle'
-        },
-        {
-          id: 2,
-          type: 'bicycle',
-          fuel_type: 'human_power',
-          monthly_distance_km: 50,
-          name: 'My Bicycle'
-        }
-      ],
-      public_transport_usage: 'weekly',
-      climate_zone: 'tropical',
-      meat_consumption: 'vegetarian',
-      air_travel_hours: 10,
-      cooking_method: 'gas',
-      monthly_grocery_bill: 15000,
-      waste_per_person: 2,
-      recycling_practice: 'yes',
-      income_level: 'low',
-      location_type: 'urban',
-      // Hidden fields with default values
-      heating_efficiency: 0.8,
-      cooling_efficiency: 0.7,
-      heating_days: 30,
-      cooling_days: 120,
-      fuel_efficiency: 15,
-      fuel_usage_liters: 30,
-      recycling_rate: 0.6,
-      composting_rate: 0.2,
-      waste_bag_weekly_count: 2,
-      tv_pc_daily_hours: 3,
-      internet_daily_hours: 4,
-      new_clothes_monthly: 1,
-      renewable_energy_percentage: 0.05,
-      home_efficiency: 0.75,
-      climate_impact_factor: 1.2,
-      lifestyle_impact_score: 0.6,
-      waste_bag_size: 40,
-      shopping_frequency: 5,
-      social_activity: '',
-      public_transport_availability: '',
-      body_type: '',
-      sex: ''
-    };
-    setFormData(emptyFormData);
+    setFormData(defaultFormData);
     setCurrentStep(0);
-  }, []);
+    setValidationErrors([]);
+    setFieldErrors({});
+  }, [defaultFormData]);
 
-  // Initialize form with default values when component mounts
+  // Initialize form with EMPTY values on each login session (Phase 1 requirement)
   useEffect(() => {
-    // Don't reset form on mount - use the default values from initial state
-  }, []);
+    const loginTime = localStorage.getItem('login_time');
+    const lastResetTime = localStorage.getItem('calculator_last_reset');
+    
+    // Reset form if this is a new login session
+    if (loginTime && loginTime !== lastResetTime) {
+      resetForm();
+      localStorage.setItem('calculator_last_reset', loginTime);
+    }
+  }, [resetForm]);
 
   // Step navigation functions
   const nextStep = () => {
@@ -531,27 +466,27 @@ const CarbonCalculator = () => {
     try {
       const api = new CarbonFootprintAPI();
       
-      // Transform form data to match API format
+      // Transform form data to match API format (use sensible defaults for empty fields)
       const individualData = {
-        household_size: formData.household_size || 4,
-        electricity_usage_kwh: formData.electricity_usage_kwh || 500,
-        home_size_sqft: formData.home_size_sqft || 1200,
+        household_size: Number(formData.household_size) || 4,
+        electricity_usage_kwh: Number(formData.electricity_usage_kwh) || 500,
+        home_size_sqft: Number(formData.home_size_sqft) || 1200,
         home_type: formData.home_type || 'apartment',
         heating_energy_source: formData.heating_energy_source || 'electric',
         cooling_energy_source: formData.cooling_energy_source || 'electric',
-        vehicle_type: formData.vehicles?.[0]?.type || 'gasoline',
-        fuel_type: formData.vehicles?.[0]?.fuel_type || 'gasoline',
+        vehicle_type: formData.vehicles?.[0]?.type || 'bicycle',
+        fuel_type: formData.vehicles?.[0]?.fuel_type || 'human_power',
         climate_zone: formData.climate_zone || 'moderate',
-        meat_consumption: formData.meat_consumption || 'medium',
+        meat_consumption: formData.meat_consumption || 'vegetarian',
         cooking_method: formData.cooking_method || 'gas',
-        recycling_practice: formData.recycling_practice || 'regular',
+        recycling_practice: formData.recycling_practice || 'yes',
         income_level: formData.income_level || 'medium',
         location_type: formData.location_type || 'urban',
-        vehicle_monthly_distance_km: formData.vehicles?.[0]?.monthly_distance_km || 500,
-        vehicles_per_household: formData.vehicles?.length || 1,
-        monthly_grocery_bill: formData.monthly_grocery_bill || 15000,
-        waste_per_person: formData.waste_per_person || 2,
-        air_travel_hours: formData.air_travel_hours || 10,
+        vehicle_monthly_distance_km: Number(formData.vehicles?.[0]?.monthly_distance_km) || 100,
+        vehicles_per_household: formData.vehicles?.length || 0,
+        monthly_grocery_bill: Number(formData.monthly_grocery_bill) || 15000,
+        waste_per_person: Number(formData.waste_per_person) || 2,
+        air_travel_hours: Number(formData.air_travel_hours) || 0,
         heating_efficiency: formData.heating_efficiency || 0.8,
         cooling_efficiency: formData.cooling_efficiency || 0.7,
         heating_days: formData.heating_days || 30,
@@ -562,7 +497,7 @@ const CarbonCalculator = () => {
         composting_rate: formData.composting_rate || 0.2,
         fuel_efficiency: formData.fuel_efficiency || 15,
         fuel_usage_liters: formData.fuel_usage_liters || 30,
-        home_age: formData.home_age || 10
+        home_age: Number(formData.home_age) || 10
       };
 
       const result = await api.predictIndividual(individualData);
