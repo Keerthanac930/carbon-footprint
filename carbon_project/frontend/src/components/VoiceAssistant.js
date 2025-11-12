@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 
 const VoiceAssistantContainer = styled.div`
@@ -166,6 +166,71 @@ const VoiceAssistant = () => {
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
 
+  const speak = (text) => {
+    if (synthRef.current) {
+      setIsSpeaking(true);
+      setStatus('speaking');
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      utterance.pitch = 1.1;
+      utterance.volume = 0.8;
+      
+      // Try to use American accent
+      const voices = synthRef.current.getVoices();
+      const americanVoice = voices.find(voice => 
+        voice.lang.includes('en-US') && 
+        (voice.name.includes('American') || voice.name.includes('US'))
+      );
+      
+      if (americanVoice) {
+        utterance.voice = americanVoice;
+      }
+      
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        setStatus('ready');
+      };
+      
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        setStatus('ready');
+      };
+      
+      synthRef.current.speak(utterance);
+    }
+  };
+
+  const handleVoiceCommand = useCallback((command) => {
+    const lowerCommand = command.toLowerCase();
+    
+    if (lowerCommand.includes('calculate') || lowerCommand.includes('footprint')) {
+      setMessage("Great! Let's calculate your carbon footprint. I'll take you to the calculator.");
+      speak("Great! Let's calculate your carbon footprint. I'll take you to the calculator.");
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    } else if (lowerCommand.includes('results') || lowerCommand.includes('view results')) {
+      setMessage("I'll show you your carbon footprint results.");
+      speak("I'll show you your carbon footprint results.");
+      setTimeout(() => {
+        window.location.href = '/results';
+      }, 2000);
+    } else if (lowerCommand.includes('digital twin') || lowerCommand.includes('twin')) {
+      setMessage("Let me show you your digital twin dashboard.");
+      speak("Let me show you your digital twin dashboard.");
+      setTimeout(() => {
+        window.location.href = '/digital-twin';
+      }, 2000);
+    } else if (lowerCommand.includes('help') || lowerCommand.includes('what can you do')) {
+      setMessage("I can help you calculate your carbon footprint, view results, explore your digital twin, and provide recommendations. Just ask me!");
+      speak("I can help you calculate your carbon footprint, view results, explore your digital twin, and provide recommendations. Just ask me!");
+    } else {
+      setMessage("I understand you said: '" + command + "'. I can help with carbon footprint calculations, results, and digital twin features. Try saying 'calculate footprint' or 'view results'.");
+      speak("I understand you said: '" + command + "'. I can help with carbon footprint calculations, results, and digital twin features. Try saying 'calculate footprint' or 'view results'.");
+    }
+  }, []);
+
   useEffect(() => {
     // Initialize speech synthesis
     if ('speechSynthesis' in window) {
@@ -210,72 +275,7 @@ const VoiceAssistant = () => {
         recognitionRef.current.stop();
       }
     };
-  }, []);
-
-  const handleVoiceCommand = (command) => {
-    const lowerCommand = command.toLowerCase();
-    
-    if (lowerCommand.includes('calculate') || lowerCommand.includes('footprint')) {
-      setMessage("Great! Let's calculate your carbon footprint. I'll take you to the calculator.");
-      speak("Great! Let's calculate your carbon footprint. I'll take you to the calculator.");
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 2000);
-    } else if (lowerCommand.includes('results') || lowerCommand.includes('view results')) {
-      setMessage("I'll show you your carbon footprint results.");
-      speak("I'll show you your carbon footprint results.");
-      setTimeout(() => {
-        window.location.href = '/results';
-      }, 2000);
-    } else if (lowerCommand.includes('digital twin') || lowerCommand.includes('twin')) {
-      setMessage("Let me show you your digital twin dashboard.");
-      speak("Let me show you your digital twin dashboard.");
-      setTimeout(() => {
-        window.location.href = '/digital-twin';
-      }, 2000);
-    } else if (lowerCommand.includes('help') || lowerCommand.includes('what can you do')) {
-      setMessage("I can help you calculate your carbon footprint, view results, explore your digital twin, and provide recommendations. Just ask me!");
-      speak("I can help you calculate your carbon footprint, view results, explore your digital twin, and provide recommendations. Just ask me!");
-    } else {
-      setMessage("I understand you said: '" + command + "'. I can help with carbon footprint calculations, results, and digital twin features. Try saying 'calculate footprint' or 'view results'.");
-      speak("I understand you said: '" + command + "'. I can help with carbon footprint calculations, results, and digital twin features. Try saying 'calculate footprint' or 'view results'.");
-    }
-  };
-
-  const speak = (text) => {
-    if (synthRef.current) {
-      setIsSpeaking(true);
-      setStatus('speaking');
-      
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.9;
-      utterance.pitch = 1.1;
-      utterance.volume = 0.8;
-      
-      // Try to use American accent
-      const voices = synthRef.current.getVoices();
-      const americanVoice = voices.find(voice => 
-        voice.lang.includes('en-US') && 
-        (voice.name.includes('American') || voice.name.includes('US'))
-      );
-      
-      if (americanVoice) {
-        utterance.voice = americanVoice;
-      }
-      
-      utterance.onend = () => {
-        setIsSpeaking(false);
-        setStatus('ready');
-      };
-      
-      utterance.onerror = () => {
-        setIsSpeaking(false);
-        setStatus('ready');
-      };
-      
-      synthRef.current.speak(utterance);
-    }
-  };
+  }, [handleVoiceCommand]);
 
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
