@@ -25,22 +25,65 @@ export const AuthProvider = ({ children }) => {
   const checkAuthStatus = async () => {
     try {
       const token = localStorage.getItem('session_token');
+      const storedUserInfo = localStorage.getItem('user_info');
+      
       if (!token) {
         setIsLoading(false);
         return;
       }
 
-      const api = new CarbonFootprintAPI();
-      const userData = await api.getCurrentUser();
-      
-      if (userData) {
-        setUser(userData);
-        setIsAuthenticated(true);
-      } else {
-        // Token is invalid, clear it
-        localStorage.removeItem('session_token');
-        localStorage.removeItem('user_info');
-        localStorage.removeItem('login_time');
+      // Try to get fresh user data from API
+      try {
+        const api = new CarbonFootprintAPI();
+        const userData = await api.getCurrentUser();
+        
+        if (userData && (userData.email || userData.id)) {
+          // Ensure we have all required fields
+          const completeUserData = {
+            id: userData.id,
+            email: userData.email,
+            name: userData.name || userData.email?.split('@')[0] || 'User',
+            created_at: userData.created_at,
+            ...userData
+          };
+          
+          // Store the fresh user data
+          localStorage.setItem('user_info', JSON.stringify(completeUserData));
+          setUser(completeUserData);
+          setIsAuthenticated(true);
+        } else {
+          throw new Error('Invalid user data from API');
+        }
+      } catch (apiError) {
+        console.error('API auth check failed:', apiError);
+        // Fallback to stored user info if API fails
+        if (storedUserInfo) {
+          try {
+            const parsedUser = JSON.parse(storedUserInfo);
+            if (parsedUser && (parsedUser.email || parsedUser.id)) {
+              // Ensure we have name field
+              const completeUser = {
+                ...parsedUser,
+                name: parsedUser.name || parsedUser.email?.split('@')[0] || 'User'
+              };
+              setUser(completeUser);
+              setIsAuthenticated(true);
+            } else {
+              throw new Error('Invalid stored user data');
+            }
+          } catch (parseError) {
+            console.error('Failed to parse stored user info:', parseError);
+            // Clear invalid data
+            localStorage.removeItem('session_token');
+            localStorage.removeItem('user_info');
+            localStorage.removeItem('login_time');
+          }
+        } else {
+          // No stored user info and API failed, clear token
+          localStorage.removeItem('session_token');
+          localStorage.removeItem('user_info');
+          localStorage.removeItem('login_time');
+        }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -62,14 +105,24 @@ export const AuthProvider = ({ children }) => {
       const response = await api.login(credentials);
 
       if (response.session_token) {
+        // Ensure user data is complete
+        const userData = response.user || {};
+        const completeUserData = {
+          id: userData.id,
+          email: userData.email,
+          name: userData.name || userData.email?.split('@')[0] || 'User',
+          created_at: userData.created_at,
+          ...userData
+        };
+        
         // Store session data
         localStorage.setItem('session_token', response.session_token);
-        localStorage.setItem('user_info', JSON.stringify(response.user));
+        localStorage.setItem('user_info', JSON.stringify(completeUserData));
         localStorage.setItem('login_time', new Date().toISOString());
         
-        setUser(response.user);
+        setUser(completeUserData);
         setIsAuthenticated(true);
-        return { success: true, user: response.user };
+        return { success: true, user: completeUserData };
       } else {
         throw new Error('Login failed');
       }

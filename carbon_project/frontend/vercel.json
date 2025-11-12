@@ -1,8 +1,6 @@
 {
-  "buildCommand": "SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true CI=false ESLINT_NO_DEV_ERRORS=true npm run build",
+  "buildCommand": "SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true CI=false npm run build",
   "outputDirectory": "build",
-  "installCommand": "npm install",
-  "framework": null,
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./"
+  "installCommand": "npm install"
 }
 

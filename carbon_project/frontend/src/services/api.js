@@ -1,10 +1,10 @@
 // API service for individual carbon footprint predictions
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 class CarbonFootprintAPI {
   constructor() {
     this.baseURL = API_BASE_URL;
-    this.timeout = 5000; // 5 seconds timeout
+    this.timeout = 10000; // 10 seconds timeout (increased for slower connections)
   }
 
   // Helper method to create fetch with timeout
@@ -43,7 +43,16 @@ class CarbonFootprintAPI {
         let errorMessage = 'Login failed';
         try {
           const errorData = await response.json();
-          errorMessage = errorData.detail || errorData.message || errorMessage;
+          // Handle FastAPI validation errors (422)
+          if (Array.isArray(errorData.detail)) {
+            errorMessage = errorData.detail.map(err => err.msg).join(', ');
+          } else if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail;
+          } else if (typeof errorData.detail === 'object') {
+            errorMessage = JSON.stringify(errorData.detail);
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
         } catch (e) {
           errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         }
@@ -53,6 +62,14 @@ class CarbonFootprintAPI {
       return await response.json();
     } catch (error) {
       console.error('Login error:', error);
+      // Provide more helpful error messages
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        throw new Error('Connection timeout. Please check your internet connection and try again.');
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to server. Please ensure the backend is running on port 8000.');
+      } else if (error.message.includes('500') || error.message.includes('Internal Server Error')) {
+        throw new Error('Server error occurred. Please try again in a moment.');
+      }
       throw error;
     }
   }
@@ -71,7 +88,16 @@ class CarbonFootprintAPI {
         let errorMessage = 'Registration failed';
         try {
           const errorData = await response.json();
-          errorMessage = errorData.detail || errorData.message || errorMessage;
+          // Handle FastAPI validation errors (422)
+          if (Array.isArray(errorData.detail)) {
+            errorMessage = errorData.detail.map(err => err.msg).join(', ');
+          } else if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail;
+          } else if (typeof errorData.detail === 'object') {
+            errorMessage = JSON.stringify(errorData.detail);
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
         } catch (e) {
           errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         }
@@ -416,6 +442,160 @@ class CarbonFootprintAPI {
       return await response.json();
     } catch (error) {
       console.error('Error checking health status:', error);
+      throw error;
+    }
+  }
+
+  // Goals Methods
+  async getGoals() {
+    try {
+      const token = localStorage.getItem('session_token');
+      
+      if (!token) {
+        console.warn('No session token found, returning empty goals');
+        return [];
+      }
+
+      const response = await this.fetchWithTimeout(`${this.baseURL}/carbon-footprint/goals`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Token': token,
+        },
+      });
+
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { detail: `HTTP ${response.status}: ${response.statusText}` };
+        }
+        throw new Error(errorData.detail || 'Failed to get goals');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Get goals error:', error);
+      // Don't throw if it's a network error, just return empty array
+      if (error.name === 'AbortError' || error.message.includes('Failed to fetch')) {
+        console.warn('Network error fetching goals, returning empty array');
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  async createGoal(goalData) {
+    try {
+      const token = localStorage.getItem('session_token');
+      
+      if (!token) {
+        throw new Error('Not authenticated. Please log in first.');
+      }
+
+      console.log('Creating goal with data:', goalData);
+      console.log('API URL:', `${this.baseURL}/carbon-footprint/goals`);
+      
+      const response = await this.fetchWithTimeout(`${this.baseURL}/carbon-footprint/goals`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Token': token,
+        },
+        body: JSON.stringify(goalData),
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { detail: `HTTP ${response.status}: ${response.statusText}` };
+        }
+        console.error('Error response:', errorData);
+        throw new Error(errorData.detail || `Failed to create goal: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('Goal created successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Create goal error:', error);
+      // Provide more helpful error messages
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - please check your connection and try again');
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to server. Please check if the backend is running on port 8000.');
+      }
+      throw error;
+    }
+  }
+
+  async getGoalProgress(goalId) {
+    try {
+      const token = localStorage.getItem('session_token');
+      const response = await this.fetchWithTimeout(`${this.baseURL}/carbon-footprint/goals/${goalId}/progress`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Token': token,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get goal progress');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Get goal progress error:', error);
+      throw error;
+    }
+  }
+
+  async markGoalAchieved(goalId) {
+    try {
+      const token = localStorage.getItem('session_token');
+      const response = await this.fetchWithTimeout(`${this.baseURL}/carbon-footprint/goals/${goalId}/achieve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Token': token,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to mark goal as achieved');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Mark goal achieved error:', error);
+      throw error;
+    }
+  }
+
+  async deleteGoal(goalId) {
+    try {
+      const token = localStorage.getItem('session_token');
+      const response = await this.fetchWithTimeout(`${this.baseURL}/carbon-footprint/goals/${goalId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Token': token,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete goal');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Delete goal error:', error);
       throw error;
     }
   }

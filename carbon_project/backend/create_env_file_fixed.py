@@ -9,8 +9,12 @@ def create_env_file():
     """Create .env file with MySQL configuration"""
     print("🔧 Creating .env file for MySQL configuration...")
     
-    # MySQL password with special characters
-    mysql_password = "Keerthu@73380"
+    # Get MySQL password from user input (for security)
+    mysql_password = input("Enter your MySQL root password: ")
+    if not mysql_password:
+        print("⚠️  Warning: No password provided. Using default placeholder.")
+        mysql_password = "your_mysql_password_here"
+    
     encoded_password = urllib.parse.quote(mysql_password)
     
     env_content = f"""# Carbon Footprint Project - Environment Configuration

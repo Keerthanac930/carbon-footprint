@@ -3,6 +3,8 @@ from typing import Optional, Dict, Any
 from fastapi import HTTPException, status
 import secrets
 import bcrypt
+from concurrent.futures import ThreadPoolExecutor
+import asyncio
 
 from ..repositories.user_repository import UserRepository, UserSessionRepository
 from ..schemas.user import LoginRequest, LoginResponse, UserCreate, UserResponse
@@ -12,19 +14,38 @@ class AuthService:
         self.db = db_session
         self.user_repo = UserRepository(db_session)
         self.session_repo = UserSessionRepository(db_session)
+        # Thread pool for CPU-intensive bcrypt operations
+        self._executor = ThreadPoolExecutor(max_workers=2)
     
     def create_session_token(self) -> str:
         """Create a simple session token"""
         return secrets.token_urlsafe(32)
     
     def hash_password(self, password: str) -> str:
-        """Hash password using bcrypt"""
-        salt = bcrypt.gensalt()
+        """Hash password using bcrypt with optimized rounds"""
+        # Use 10 rounds instead of default 12 for faster hashing (still secure)
+        salt = bcrypt.gensalt(rounds=10)
         return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
     
     def verify_password(self, password: str, hashed: str) -> bool:
         """Verify password against hash"""
         return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+    
+    async def verify_password_async(self, password: str, hashed: str) -> bool:
+        """Verify password asynchronously to avoid blocking event loop"""
+        try:
+            # Try to get running loop first (for async context)
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # Fallback to get_event_loop if no running loop
+            loop = asyncio.get_event_loop()
+        
+        return await loop.run_in_executor(
+            self._executor,
+            self.verify_password,
+            password,
+            hashed
+        )
     
     def login(self, login_data: LoginRequest) -> LoginResponse:
         """User login with password authentication - ONLY for registered users"""
@@ -61,6 +82,59 @@ class AuthService:
             user=UserResponse.from_orm(user),
             expires_at=expires_at
         )
+    
+    async def login_async(self, login_data: LoginRequest) -> LoginResponse:
+        """Async version of login - uses thread pool for bcrypt to avoid blocking"""
+        try:
+            # Check if user exists
+            user = self.user_repo.get_user_by_email(login_data.email)
+            
+            # Reject login if user doesn't exist - specific error message
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Email not found. Please register first or check your email address."
+                )
+            
+            # Verify password asynchronously to avoid blocking event loop
+            try:
+                is_valid = await self.verify_password_async(login_data.password, user.password_hash)
+            except Exception as e:
+                # Fallback to synchronous verification if async fails
+                print(f"Async password verification failed, using sync fallback: {e}")
+                is_valid = self.verify_password(login_data.password, user.password_hash)
+            
+            if not is_valid:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Incorrect password. Please try again."
+                )
+            
+            # Create session token
+            session_token = self.create_session_token()
+            expires_at = datetime.utcnow() + timedelta(days=7)  # 7 days session
+            
+            # Create session (database operations are fast, no need to async)
+            self.session_repo.create_session(
+                user_id=user.id,
+                session_token=session_token,
+                expires_at=expires_at
+            )
+            
+            return LoginResponse(
+                session_token=session_token,
+                user=UserResponse.from_orm(user),
+                expires_at=expires_at
+            )
+        except HTTPException:
+            raise
+        except Exception as e:
+            # Log the error for debugging
+            print(f"Login error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Login failed: {str(e)}"
+            )
     
     def register(self, user_data: UserCreate) -> UserResponse:
         """User registration"""
@@ -111,6 +185,7 @@ class AuthService:
     
     def get_user_sessions(self, user_id: int) -> list:
         """Get user's active sessions"""
+        from ..models.user import UserSession
         sessions = self.db.query(UserSession).filter(UserSession.user_id == user_id).all()
         
         return [
@@ -121,3 +196,8 @@ class AuthService:
             }
             for session in sessions
         ]
+    
+    def __del__(self):
+        """Cleanup thread pool executor"""
+        if hasattr(self, '_executor'):
+            self._executor.shutdown(wait=False)

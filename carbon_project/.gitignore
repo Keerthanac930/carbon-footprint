@@ -71,3 +71,48 @@ htmlcov/
 *.tmp
 *.bak
 
+# Sensitive files
+*.key
+*.pem
+*.crt
+*.cert
+*_secret*
+*_password*
+*_key*
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+flutter_*.png
+linked_*.ds
+unlinked.ds
+unlinked_spec.ds
+
+# APK files
+*.apk
+*.aab
+
+# IP address files
+.last_ip_address.json
+*.ip
+
+# QR codes and generated images (but allow docs, presentation, reports)
+*.png
+*.jpg
+*.jpeg
+!docs/**/*.png
+!docs/**/*.jpg
+!presentation/**/*.png
+!presentation/**/*.jpg
+!reports/**/*.png
+!reports/**/*.jpg
+
+# Local development files
+*.local
+*.dev
+*.test

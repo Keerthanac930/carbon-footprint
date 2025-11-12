@@ -1,6 +1,10 @@
 import os
 from typing import List
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 class Settings:
     """Application settings"""
     
@@ -13,7 +17,13 @@ class Settings:
     
     @property
     def DATABASE_URL(self) -> str:
-        return f"mysql+pymysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        # Support TiDB (MySQL compatible), PostgreSQL, and MySQL
+        db_type = os.getenv("DB_TYPE", "mysql")  # Default to MySQL/TiDB
+        if db_type == "postgresql":
+            return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        else:
+            # TiDB uses MySQL protocol, so use mysql+pymysql
+            return f"mysql+pymysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
     
     # JWT Configuration
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-super-secret-jwt-key-change-in-production")
@@ -28,10 +38,13 @@ class Settings:
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
     # CORS Configuration
-    ALLOWED_ORIGINS: List[str] = os.getenv(
-        "ALLOWED_ORIGINS", 
-        "http://localhost:3000,http://localhost:3001,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:8080"
-    ).split(",")
+    ALLOWED_ORIGINS: List[str] = [
+        origin.strip() 
+        for origin in os.getenv(
+            "ALLOWED_ORIGINS", 
+            "http://localhost:3000,http://localhost:3001,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:8080"
+        ).split(",")
+    ]
     
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))

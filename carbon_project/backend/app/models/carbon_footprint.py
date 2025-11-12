@@ -19,7 +19,7 @@ class CarbonFootprint(Base):
     __tablename__ = "carbon_footprints"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=False, index=True)
+    user_id = Column(Integer, nullable=True, index=True)
     calculation_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
     
     # Input data stored as JSON for flexibility

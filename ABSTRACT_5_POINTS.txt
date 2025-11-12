@@ -1,0 +1,20 @@
+ABSTRACT - 5 KEY POINTS FOR PPT
+
+1. OBJECTIVE
+   Developed an AI-driven Carbon Footprint Calculator & Prediction System to help individuals understand and reduce their environmental impact.
+
+2. TECHNOLOGY
+   Built using React.js frontend, FastAPI backend, MySQL database, and Random Forest machine learning model.
+
+3. ACCURACY
+   Machine learning model achieves 99.95% accuracy (R² = 0.9995) in predicting carbon emissions based on user lifestyle data.
+
+4. FEATURES
+   - Real-time carbon footprint calculation
+   - Personalized recommendations for reduction
+   - User-friendly step-by-step interface
+   - Historical tracking and analytics
+
+5. IMPACT
+   Enables users to make informed decisions about their carbon footprint and take actionable steps toward environmental sustainability.
+

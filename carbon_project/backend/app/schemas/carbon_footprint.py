@@ -36,7 +36,7 @@ class CarbonFootprintCreate(CarbonFootprintBase):
 
 class CarbonFootprintResponse(CarbonFootprintBase):
     id: int
-    user_id: int
+    user_id: Optional[int] = None
     calculation_uuid: str
     calculation_date: datetime
     created_at: datetime
@@ -234,6 +234,7 @@ class CarbonFootprintCalculationResponse(BaseModel):
     calculation_uuid: str
     model_name: str
     model_version: str
+    breakdown: Optional[Dict[str, float]] = None
 
 # Pagination schemas
 class PaginationParams(BaseModel):

@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
@@ -6,14 +6,13 @@ import os
 from typing import Generator
 from dotenv import load_dotenv
 
+from app.config import settings
+
 # Load environment variables
 load_dotenv()
 
 # Database configuration
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "mysql+pymysql://root:Keerthu%4073380@localhost:3306/carbon_footprint_db"
-)
+DATABASE_URL = os.getenv("DATABASE_URL") or settings.DATABASE_URL
 
 # Create engine with connection pooling
 engine = create_engine(
@@ -57,3 +56,17 @@ def drop_tables():
     Drop all tables in the database
     """
     Base.metadata.drop_all(bind=engine)
+
+
+def test_database_connection() -> bool:
+    """
+    Attempt to establish a database connection and run a lightweight query.
+    Returns True when successful, otherwise False.
+    """
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        return True
+    except Exception as exc:  # pylint: disable=broad-except
+        print(f"❌ Database connectivity check failed: {exc}")
+        return False

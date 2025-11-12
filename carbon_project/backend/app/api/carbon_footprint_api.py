@@ -66,6 +66,16 @@ async def calculate_carbon_footprint(
         recommendations = carbon_service.get_recommendations(current_user.id, 0, 10)
         footprint_recommendations = [rec for rec in recommendations if rec.get('carbon_footprint_id') == footprint.id]
         
+        # Calculate breakdown for response
+        breakdown = {
+            "electricity": float(footprint.electricity_emissions or 0),
+            "transportation": float(footprint.transportation_emissions or 0),
+            "heating": float(footprint.heating_emissions or 0),
+            "waste": float(footprint.waste_emissions or 0),
+            "lifestyle": float(footprint.lifestyle_emissions or 0),
+            "other": float(footprint.other_emissions or 0)
+        }
+        
         return CarbonFootprintCalculationResponse(
             predicted_emissions=float(footprint.total_emissions),
             confidence_score=float(footprint.confidence_score),
@@ -81,7 +91,8 @@ async def calculate_carbon_footprint(
             ],
             calculation_uuid=footprint.calculation_uuid,
             model_name=footprint.model_name,
-            model_version=footprint.model_version or "v3"
+            model_version=footprint.model_version or "v3",
+            breakdown=breakdown  # Include breakdown data
         )
         
     except Exception as e:
@@ -112,6 +123,16 @@ async def calculate_carbon_footprint_anonymous(
             user_agent=user_agent
         )
         
+        # Calculate breakdown for response
+        breakdown = {
+            "electricity": float(footprint.electricity_emissions or 0),
+            "transportation": float(footprint.transportation_emissions or 0),
+            "heating": float(footprint.heating_emissions or 0),
+            "waste": float(footprint.waste_emissions or 0),
+            "lifestyle": float(footprint.lifestyle_emissions or 0),
+            "other": float(footprint.other_emissions or 0)
+        }
+        
         return CarbonFootprintCalculationResponse(
             predicted_emissions=float(footprint.total_emissions),
             confidence_score=float(footprint.confidence_score),
@@ -119,7 +140,8 @@ async def calculate_carbon_footprint_anonymous(
             recommendations=[],  # No recommendations for anonymous users
             calculation_uuid=footprint.calculation_uuid,
             model_name=footprint.model_name,
-            model_version=footprint.model_version or "v3"
+            model_version=footprint.model_version or "v3",
+            breakdown=breakdown  # Include breakdown data
         )
         
     except Exception as e:

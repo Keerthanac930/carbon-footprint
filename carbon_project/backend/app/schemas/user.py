@@ -30,7 +30,6 @@ class UserResponse(UserBase):
 # Simple authentication schemas
 class LoginRequest(BaseModel):
     email: EmailStr
-    name: str
     password: str
 
 class LoginResponse(BaseModel):

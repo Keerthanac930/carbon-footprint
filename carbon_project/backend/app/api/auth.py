@@ -49,16 +49,27 @@ async def login(
     login_data: LoginRequest,
     auth_service: AuthService = Depends(get_auth_service)
 ):
-    """User login - creates user if doesn't exist"""
+    """User login - optimized async version with fallback"""
     try:
-        response = auth_service.login(login_data)
-        return response
+        # Try async login method first (faster, non-blocking)
+        try:
+            response = await auth_service.login_async(login_data)
+            return response
+        except Exception as async_error:
+            # If async fails, fallback to synchronous method
+            print(f"Async login failed, using sync fallback: {async_error}")
+            response = auth_service.login(login_data)
+            return response
     except HTTPException:
         raise
     except Exception as e:
+        # Log the error for debugging
+        import traceback
+        print(f"Login endpoint error: {e}")
+        print(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Login failed: {str(e)}"
+            detail=f"Login failed. Please check your connection and try again."
         )
 
 @router.post("/logout")

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Dict, Any
 import sys
@@ -10,7 +11,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'ml'))
 
 from app.ml.predict_carbon_fixed import CarbonEmissionPredictorFixed
 from app.config import settings
-from app.database.connection import create_tables
+from app.database.connection import create_tables, test_database_connection
 
 # Create FastAPI app
 app = FastAPI(
@@ -22,7 +23,7 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=["*"],  # Allow all origins for mobile app compatibility
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,6 +46,18 @@ async def startup_event():
         print("✅ Database tables created/verified")
     except Exception as e:
         print(f"⚠️  Database initialization warning: {e}")
+        print("⚠️  Server will continue, but database features may not work")
+
+    # Verify database connectivity (non-blocking)
+    try:
+        if test_database_connection():
+            print("✅ Database connectivity verified")
+        else:
+            print("⚠️  Database connection failed, but server will continue")
+            print("⚠️  You can still test the API, but database features won't work")
+    except Exception as e:
+        print(f"⚠️  Database connection check failed: {e}")
+        print("⚠️  Server will continue - check database settings if you need database features")
     
     # Load ML model (this is the heavy part)
     try:
@@ -62,18 +75,30 @@ async def startup_event():
         print(f"❌ Failed to load ML model: {e}")
         print("⚠️  Prediction endpoints will not work until model is loaded")
     
+    port = os.environ.get("PORT", 8000)
     print("=" * 60)
-    print("✅ Backend ready on http://localhost:8000")
-    print("📋 API Documentation: http://localhost:8000/docs")
-    print("🔗 Test endpoint: http://localhost:8000/ping")
+    print(f"✅ Backend ready on port {port}")
+    print(f"📋 API Documentation: http://0.0.0.0:{port}/docs")
+    print(f"🔗 Test endpoint: http://0.0.0.0:{port}/ping")
     print("=" * 60)
 
 # Include API routers
 from app.api.auth import router as auth_router
 from app.api.carbon_footprint_api import router as carbon_router
+from app.api.marketplace_api import router as marketplace_router
+from app.api.chatbot_api import router as chatbot_router
 
 app.include_router(auth_router)
 app.include_router(carbon_router)
+app.include_router(marketplace_router)
+app.include_router(chatbot_router)
+
+# Serve static files (including mobile build artifacts)
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if not os.path.exists(static_dir):
+    os.makedirs(static_dir, exist_ok=True)
+
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 class CarbonPredictionRequest(BaseModel):
     # Core features
@@ -223,4 +248,7 @@ async def get_model_details():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import os
+    # Railway provides PORT environment variable
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

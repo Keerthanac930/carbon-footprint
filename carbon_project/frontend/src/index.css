@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 * {
@@ -827,6 +831,385 @@ button {
   }
 }
 
+/* ==================================================================== */
+/* WHITE CARD DESIGN SYSTEM - CONSISTENT UI/UX */
+/* ==================================================================== */
+
+/* Base White Card Styles */
+.white-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.white-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.white-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  border-color: rgba(76, 175, 80, 0.2);
+}
+
+.white-card:hover::before {
+  opacity: 1;
+}
+
+/* White Card Variants */
+.white-card-sm {
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.white-card-md {
+  padding: 24px;
+  border-radius: 20px;
+}
+
+.white-card-lg {
+  padding: 32px;
+  border-radius: 24px;
+}
+
+.white-card-xl {
+  padding: 40px;
+  border-radius: 28px;
+}
+
+/* White Card with Gradient Accent */
+.white-card-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  border-left: 4px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+
+.white-card-gradient::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #4CAF50, #45a049, #2E8B57);
+  border-radius: inherit;
+  padding: 4px;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  z-index: -1;
+}
+
+/* White Card with Icon Header */
+.white-card-icon-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.white-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.white-card-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.white-card-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 4px 0 0 0;
+  font-weight: 500;
+}
+
+/* White Card Content Areas */
+.white-card-content {
+  color: #4a4a4a;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.white-card-content h3 {
+  color: #2a2a2a;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.white-card-content p {
+  margin: 0 0 16px 0;
+  color: #5a5a5a;
+}
+
+.white-card-content ul {
+  margin: 0 0 16px 0;
+  padding-left: 20px;
+}
+
+.white-card-content li {
+  margin: 0 0 8px 0;
+  color: #5a5a5a;
+}
+
+/* White Card Actions */
+.white-card-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.white-card-button {
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.white-card-button-primary {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.white-card-button-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.white-card-button-secondary {
+  background: #f8f9fa;
+  color: #4a4a4a;
+  border: 1px solid #e9ecef;
+}
+
+.white-card-button-secondary:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+}
+
+/* White Card Stats */
+.white-card-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.white-card-stat {
+  text-align: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8f9fa, #ffffff);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.white-card-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #4CAF50;
+  margin: 0 0 4px 0;
+  line-height: 1;
+}
+
+.white-card-stat-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* White Card Grid Layout */
+.white-card-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.white-card-grid-1 {
+  grid-template-columns: 1fr;
+}
+
+.white-card-grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.white-card-grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.white-card-grid-4 {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* White Card Loading State */
+.white-card-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.white-card-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* White Card Empty State */
+.white-card-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+}
+
+.white-card-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.white-card-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #666;
+  margin: 0 0 8px 0;
+}
+
+.white-card-empty-description {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
+}
+
+/* White Card Responsive Design */
+@media (max-width: 768px) {
+  .white-card {
+    border-radius: 16px;
+    margin: 0 8px;
+  }
+  
+  .white-card-sm { padding: 12px; }
+  .white-card-md { padding: 16px; }
+  .white-card-lg { padding: 20px; }
+  .white-card-xl { padding: 24px; }
+  
+  .white-card-title {
+    font-size: 20px;
+  }
+  
+  .white-card-actions {
+    flex-direction: column;
+  }
+  
+  .white-card-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .white-card-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .white-card-grid-2,
+  .white-card-grid-3,
+  .white-card-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* White Card Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .white-card {
+    background: #1a1a1a;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+  }
+  
+  .white-card-title {
+    color: #ffffff;
+  }
+  
+  .white-card-subtitle {
+    color: #b0b0b0;
+  }
+  
+  .white-card-content {
+    color: #d0d0d0;
+  }
+  
+  .white-card-content h3 {
+    color: #f0f0f0;
+  }
+  
+  .white-card-content p,
+  .white-card-content li {
+    color: #c0c0c0;
+  }
+  
+  .white-card-stat {
+    background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .white-card-button-secondary {
+    background: #2a2a2a;
+    color: #e0e0e0;
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .white-card-button-secondary:hover {
+    background: #3a3a3a;
+  }
+}
+
 /* Print styles */
 @media print {
   .voice-assistant-container,
@@ -837,5 +1220,11 @@ button {
   .digital-twin-card {
     box-shadow: none;
     border: 1px solid #000;
+  }
+  
+  .white-card {
+    box-shadow: none;
+    border: 1px solid #000;
+    break-inside: avoid;
   }
 }
