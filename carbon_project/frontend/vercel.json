@@ -1,0 +1,6 @@
+{
+  "buildCommand": "SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true npm run build",
+  "outputDirectory": "build",
+  "framework": "create-react-app"
+}
+
