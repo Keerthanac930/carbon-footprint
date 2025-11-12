@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd frontend && SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true CI=false npm run build",
-  "outputDirectory": "frontend/build",
-  "installCommand": "cd frontend && npm install",
+  "buildCommand": "SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true CI=false npm run build",
+  "outputDirectory": "build",
+  "installCommand": "npm install",
   "framework": null
 }
 
