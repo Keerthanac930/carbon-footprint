@@ -2,21 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  PieChart, Pie, Cell, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import {
   FiTrendingDown, FiTrendingUp, FiAlertCircle,
-  FiCheckCircle, FiTarget, FiActivity
+  FiCheckCircle, FiTarget, FiActivity, FiClock, FiArrowLeft
 } from 'react-icons/fi';
+import CarbonFootprintAPI from '../../services/api';
 
 const ResultsPage = () => {
   const navigate = useNavigate();
   const [results, setResults] = useState(null);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     loadResults();
+    loadHistory();
   }, []);
 
   const loadResults = () => {
@@ -30,6 +34,25 @@ const ResultsPage = () => {
       console.error('Error loading results:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadHistory = async () => {
+    try {
+      const api = new CarbonFootprintAPI();
+      const historyData = await api.getCarbonFootprintHistory();
+      if (historyData && Array.isArray(historyData)) {
+        setHistory(historyData);
+      }
+    } catch (error) {
+      console.error('Error loading history:', error);
+      // Fallback to localStorage if API fails
+      try {
+        const localHistory = JSON.parse(localStorage.getItem('carbonFootprintHistory') || '[]');
+        setHistory(localHistory);
+      } catch (e) {
+        console.error('Error loading local history:', e);
+      }
     }
   };
 
@@ -65,14 +88,89 @@ const ResultsPage = () => {
     );
   }
 
-  // Calculate category breakdown
-  const totalEmissions = results.annual_emissions || results.total_emissions || 0;
-  const categoryData = [
-    { name: 'Transport', value: (totalEmissions * 0.35).toFixed(2), color: '#FF6384' },
-    { name: 'Home Energy', value: (totalEmissions * 0.30).toFixed(2), color: '#36A2EB' },
-    { name: 'Food', value: (totalEmissions * 0.20).toFixed(2), color: '#FFCE56' },
-    { name: 'Waste', value: (totalEmissions * 0.15).toFixed(2), color: '#4BC0C0' },
-  ];
+  // Calculate category breakdown - check multiple possible field names
+  const totalEmissions = results.predicted_emissions || results.annual_emissions || results.total_emissions || 0;
+  
+  // Use breakdown from API if available, otherwise use estimated percentages
+  // Note: All values are in kg CO2/year from the API, we convert to tonnes for display
+  let categoryData;
+  if (results.breakdown && Object.keys(results.breakdown).length > 0) {
+    // Use actual breakdown from API (values are in kg, convert to tonnes for display)
+    // Ensure values are numbers and properly converted
+    const breakdown = results.breakdown;
+    categoryData = [
+      { 
+        name: 'Transport', 
+        value: parseFloat((breakdown.transportation || 0) / 1000), 
+        rawValue: parseFloat(breakdown.transportation || 0),
+        displayValue: parseFloat((breakdown.transportation || 0) / 1000).toFixed(2),
+        color: '#FF6384' 
+      },
+      { 
+        name: 'Home Energy', 
+        value: parseFloat((breakdown.electricity || 0) / 1000), 
+        rawValue: parseFloat(breakdown.electricity || 0),
+        displayValue: parseFloat((breakdown.electricity || 0) / 1000).toFixed(2),
+        color: '#36A2EB' 
+      },
+      { 
+        name: 'Heating', 
+        value: parseFloat((breakdown.heating || 0) / 1000), 
+        rawValue: parseFloat(breakdown.heating || 0),
+        displayValue: parseFloat((breakdown.heating || 0) / 1000).toFixed(2),
+        color: '#FF9800' 
+      },
+      { 
+        name: 'Waste', 
+        value: parseFloat((breakdown.waste || 0) / 1000), 
+        rawValue: parseFloat(breakdown.waste || 0),
+        displayValue: parseFloat((breakdown.waste || 0) / 1000).toFixed(2),
+        color: '#4BC0C0' 
+      },
+      { 
+        name: 'Lifestyle', 
+        value: parseFloat((breakdown.lifestyle || 0) / 1000), 
+        rawValue: parseFloat(breakdown.lifestyle || 0),
+        displayValue: parseFloat((breakdown.lifestyle || 0) / 1000).toFixed(2),
+        color: '#9C27B0' 
+      },
+      { 
+        name: 'Other', 
+        value: parseFloat((breakdown.other || 0) / 1000), 
+        rawValue: parseFloat(breakdown.other || 0),
+        displayValue: parseFloat((breakdown.other || 0) / 1000).toFixed(2),
+        color: '#607D8B' 
+      },
+    ].filter(item => item.value > 0.01); // Only show categories > 0.01 tonnes
+  } else {
+    // Fallback to estimated percentages (totalEmissions is in kg, convert to tonnes)
+    categoryData = [
+      { 
+        name: 'Transport', 
+        value: parseFloat(totalEmissions * 0.35 / 1000), 
+        displayValue: (totalEmissions * 0.35 / 1000).toFixed(2),
+        color: '#FF6384' 
+      },
+      { 
+        name: 'Home Energy', 
+        value: parseFloat(totalEmissions * 0.30 / 1000), 
+        displayValue: (totalEmissions * 0.30 / 1000).toFixed(2),
+        color: '#36A2EB' 
+      },
+      { 
+        name: 'Food', 
+        value: parseFloat(totalEmissions * 0.20 / 1000), 
+        displayValue: (totalEmissions * 0.20 / 1000).toFixed(2),
+        color: '#FFCE56' 
+      },
+      { 
+        name: 'Waste', 
+        value: parseFloat(totalEmissions * 0.15 / 1000), 
+        displayValue: (totalEmissions * 0.15 / 1000).toFixed(2),
+        color: '#4BC0C0' 
+      },
+    ];
+  }
 
   // Comparison data
   const comparisonData = [
@@ -118,20 +216,31 @@ const ResultsPage = () => {
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Header with Total Emissions */}
+      {/* Header with Back Button and Total Emissions */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-gradient-to-r from-green-500 to-blue-600 rounded-2xl p-8 text-white shadow-2xl"
       >
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">
-              Your Carbon Footprint Results
-            </h1>
-            <p className="text-green-50 text-lg">
-              Analysis completed on {new Date().toLocaleDateString()}
-            </p>
+          <div className="flex-1">
+            <div className="flex items-center space-x-4 mb-4">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                title="Go back to dashboard"
+              >
+                <FiArrowLeft size={24} />
+              </button>
+              <div>
+                <h1 className="text-4xl font-bold mb-2">
+                  Your Carbon Footprint Results
+                </h1>
+                <p className="text-green-50 text-lg">
+                  Analysis completed on {new Date().toLocaleDateString()}
+                </p>
+              </div>
+            </div>
           </div>
           <div className="text-right">
             <div className="text-6xl font-bold mb-2">
@@ -142,7 +251,79 @@ const ResultsPage = () => {
             </div>
           </div>
         </div>
+        
+        {/* History Toggle Button */}
+        <div className="mt-4 flex items-center space-x-4">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="flex items-center space-x-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+          >
+            <FiClock size={18} />
+            <span>{showHistory ? 'Hide' : 'Show'} History ({history.length})</span>
+          </button>
+        </div>
       </motion.div>
+
+      {/* History Section */}
+      {showHistory && history.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6"
+        >
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Calculation History
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Total Emissions</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((entry, index) => (
+                  <tr key={index} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
+                      {new Date(entry.calculation_date || entry.date || entry.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
+                      {((entry.total_emissions || entry.predicted_emissions || entry.footprint || 0) / 1000).toFixed(2)} tonnes
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        Completed
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      )}
+
+      {showHistory && history.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 text-center"
+        >
+          <FiClock className="mx-auto text-gray-400 mb-4" size={48} />
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No History Yet</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            You haven't made any calculations yet. Start tracking your carbon footprint!
+          </p>
+          <button
+            onClick={() => navigate('/dashboard/calculator')}
+            className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg transition-shadow"
+          >
+            Calculate Now
+          </button>
+        </motion.div>
+      )}
 
       {/* Comparison Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -247,7 +428,7 @@ const ResultsPage = () => {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip formatter={(value) => [`${value} tonnes`, '']} />
             </PieChart>
           </ResponsiveContainer>
           <div className="grid grid-cols-2 gap-4 mt-6">
@@ -262,7 +443,7 @@ const ResultsPage = () => {
                     {category.name}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {category.value} kg
+                    {category.displayValue || category.value} tonnes
                   </p>
                 </div>
               </div>
