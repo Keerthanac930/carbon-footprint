@@ -1,6 +1,6 @@
 {
-  "buildCommand": "cd carbon_project/frontend && SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true CI=false npm run build",
-  "outputDirectory": "carbon_project/frontend/build",
-  "installCommand": "cd carbon_project/frontend && npm install"
+  "buildCommand": "SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true CI=false npm run build",
+  "outputDirectory": "build",
+  "installCommand": "npm install"
 }
 
