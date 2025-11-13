@@ -23,7 +23,8 @@ const Goals = () => {
     // Test backend connection on mount
     const testConnection = async () => {
       try {
-        const response = await fetch('http://localhost:8000/ping');
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/ping`);
         if (response.ok) {
           console.log('✅ Backend connection successful');
         } else {
@@ -31,7 +32,10 @@ const Goals = () => {
         }
       } catch (error) {
         console.error('❌ Backend connection failed:', error);
-        alert('Warning: Cannot connect to backend server. Please ensure the backend is running on port 8000.');
+        // Don't show alert in production, just log
+        if (window.location.hostname === 'localhost') {
+          alert('Warning: Cannot connect to backend server. Please ensure the backend is running on port 8000.');
+        }
       }
     };
     
