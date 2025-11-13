@@ -6,10 +6,16 @@ from typing import Dict, Any
 import sys
 import os
 
-# Add the ml directory to the path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'ml'))
-
-from app.ml.predict_carbon_fixed import CarbonEmissionPredictorFixed
+# Import ML predictor
+try:
+    from app.ml.predict_carbon_fixed import CarbonEmissionPredictorFixed
+except ImportError:
+    # Fallback if import fails
+    import sys
+    ml_path = os.path.join(os.path.dirname(__file__), 'ml')
+    if ml_path not in sys.path:
+        sys.path.insert(0, ml_path)
+    from predict_carbon_fixed import CarbonEmissionPredictorFixed
 from app.config import settings
 from app.database.connection import create_tables, test_database_connection
 
