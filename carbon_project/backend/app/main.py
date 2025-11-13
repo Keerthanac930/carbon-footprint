@@ -18,34 +18,27 @@ if backend_dir not in sys.path:
 if current_file_dir not in sys.path:
     sys.path.insert(0, current_file_dir)
 
-# Import ML predictor - handle different deployment structures
-# Try importing directly from file first (most reliable)
+# Import ML predictor - ALWAYS use direct file import (most reliable)
 ml_file = os.path.join(current_file_dir, 'ml', 'predict_carbon_fixed.py')
-if os.path.exists(ml_file):
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("predict_carbon_fixed", ml_file)
-    predict_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(predict_module)
-    CarbonEmissionPredictorFixed = predict_module.CarbonEmissionPredictorFixed
-else:
-    # Fallback to standard imports
-    CarbonEmissionPredictorFixed = None
-    try:
-        # Try standard import
-        from app.ml.predict_carbon_fixed import CarbonEmissionPredictorFixed
-    except ImportError:
-        try:
-            # Try relative import
-            from .ml.predict_carbon_fixed import CarbonEmissionPredictorFixed
-        except ImportError:
-            # Try direct import from ml directory
-            ml_dir = os.path.join(current_file_dir, 'ml')
-            if ml_dir not in sys.path:
-                sys.path.insert(0, ml_dir)
-            from predict_carbon_fixed import CarbonEmissionPredictorFixed
 
-if CarbonEmissionPredictorFixed is None:
-    raise ImportError(f"Failed to import CarbonEmissionPredictorFixed. ML file path: {ml_file}, exists: {os.path.exists(ml_file) if ml_file else False}")
+# Debug: Print paths for troubleshooting
+print(f"DEBUG: current_file_dir = {current_file_dir}")
+print(f"DEBUG: backend_dir = {backend_dir}")
+print(f"DEBUG: ml_file = {ml_file}")
+print(f"DEBUG: ml_file exists = {os.path.exists(ml_file)}")
+print(f"DEBUG: sys.path = {sys.path[:5]}...")  # First 5 entries
+
+if not os.path.exists(ml_file):
+    raise ImportError(f"ML file not found at: {ml_file}. Current dir: {current_file_dir}, Backend dir: {backend_dir}")
+
+# Import directly from file (most reliable method)
+import importlib.util
+spec = importlib.util.spec_from_file_location("predict_carbon_fixed", ml_file)
+predict_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(predict_module)
+CarbonEmissionPredictorFixed = predict_module.CarbonEmissionPredictorFixed
+
+print(f"DEBUG: Successfully imported CarbonEmissionPredictorFixed")
 from app.config import settings
 from app.database.connection import create_tables, test_database_connection
 
