@@ -6,26 +6,44 @@ from typing import Dict, Any
 import sys
 import os
 
+# Setup Python path to ensure app module can be imported
+# Get the directory containing this file (app/)
+current_file_dir = os.path.dirname(os.path.abspath(__file__))
+# Get the parent directory (backend/) - this should be in Python path
+backend_dir = os.path.dirname(current_file_dir)
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
 # Import ML predictor - handle different deployment structures
+CarbonEmissionPredictorFixed = None
 try:
     # Try standard import first
     from app.ml.predict_carbon_fixed import CarbonEmissionPredictorFixed
-except ImportError:
+except ImportError as e1:
     try:
         # Try relative import
         from .ml.predict_carbon_fixed import CarbonEmissionPredictorFixed
-    except ImportError:
-        # Fallback: add ml directory to path and import directly
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        ml_dir = os.path.join(current_dir, 'ml')
-        if ml_dir not in sys.path:
-            sys.path.insert(0, ml_dir)
-        # Import directly from the file
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("predict_carbon_fixed", os.path.join(ml_dir, "predict_carbon_fixed.py"))
-        predict_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(predict_module)
-        CarbonEmissionPredictorFixed = predict_module.CarbonEmissionPredictorFixed
+    except ImportError as e2:
+        try:
+            # Try direct import from ml directory
+            ml_dir = os.path.join(current_file_dir, 'ml')
+            if ml_dir not in sys.path:
+                sys.path.insert(0, ml_dir)
+            from predict_carbon_fixed import CarbonEmissionPredictorFixed
+        except ImportError as e3:
+            # Final fallback: import directly from file
+            ml_file = os.path.join(current_file_dir, 'ml', 'predict_carbon_fixed.py')
+            if os.path.exists(ml_file):
+                import importlib.util
+                spec = importlib.util.spec_from_file_location("predict_carbon_fixed", ml_file)
+                predict_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(predict_module)
+                CarbonEmissionPredictorFixed = predict_module.CarbonEmissionPredictorFixed
+            else:
+                raise ImportError(f"Could not find predict_carbon_fixed.py. Tried: {ml_file}. Errors: {e1}, {e2}, {e3}")
+
+if CarbonEmissionPredictorFixed is None:
+    raise ImportError("Failed to import CarbonEmissionPredictorFixed after all attempts")
 from app.config import settings
 from app.database.connection import create_tables, test_database_connection
 
