@@ -1,13 +1,17 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiCamera, FiUpload, FiCheckCircle, FiX, FiFileText, FiAlertCircle } from 'react-icons/fi';
+import { FiCamera, FiUpload, FiCheckCircle, FiX, FiFileText, FiAlertCircle, FiZap } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { ErrorHandler } from '../../utils/errorHandler';
 
 const OCRScanner = () => {
+  const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [extractedUnits, setExtractedUnits] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
@@ -37,47 +41,118 @@ const OCRScanner = () => {
     }
   };
 
+  /**
+   * Extract electricity units from bill text using pattern matching
+   * Looks for patterns like "500 kWh", "500 units", "500.5 kWh", etc.
+   */
+  const extractElectricityUnits = (text) => {
+    // Common patterns for electricity bills
+    const patterns = [
+      /(\d+\.?\d*)\s*(?:kwh|kwh|units?|unit)/gi,
+      /(?:consumption|usage|reading|current|present)[\s:]*(\d+\.?\d*)/gi,
+      /(\d+\.?\d*)\s*(?:kwh|units?)/gi,
+    ];
+    
+    let units = null;
+    
+    for (const pattern of patterns) {
+      const matches = text.match(pattern);
+      if (matches) {
+        // Extract the number from the match
+        const numbers = matches.map(match => {
+          const numMatch = match.match(/(\d+\.?\d*)/);
+          return numMatch ? parseFloat(numMatch[1]) : null;
+        }).filter(n => n !== null && n > 0 && n < 10000); // Reasonable range
+        
+        if (numbers.length > 0) {
+          // Use the largest number (likely the total consumption)
+          units = Math.max(...numbers);
+          break;
+        }
+      }
+    }
+    
+    return units;
+  };
+
   const handleScan = async () => {
     if (!file) return;
     
     setLoading(true);
     setError('');
     
-    // Simulate OCR processing with realistic delay
-    setTimeout(() => {
-      // Mock OCR results with product emission data
-      const mockProducts = [
-        { name: 'Organic Milk - 1L', emissions: 1.2, category: 'Dairy' },
-        { name: 'Whole Wheat Bread', emissions: 0.8, category: 'Bakery' },
-        { name: 'Fresh Vegetables - 2kg', emissions: 0.6, category: 'Produce' },
-        { name: 'Free-range Eggs (12)', emissions: 0.9, category: 'Dairy' },
-        { name: 'Olive Oil - 500ml', emissions: 0.7, category: 'Cooking' },
-        { name: 'Tomatoes - 1kg', emissions: 0.3, category: 'Produce' },
-      ];
-
-      const totalEmissions = mockProducts.reduce((sum, p) => sum + p.emissions, 0);
-
-      setResult({
-        products: mockProducts,
-        totalEmissions: totalEmissions.toFixed(2),
-        totalItems: mockProducts.length,
-        recommendations: [
-          'Consider buying local produce to reduce transportation emissions',
-          'Organic products typically have 20-30% lower carbon footprint',
-          'Reduce food waste by planning meals ahead'
-        ]
-      });
+    try {
+      // Simulate OCR processing with realistic delay
+      // In a real app, this would call an OCR API
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mock OCR text extraction (simulating what OCR would return)
+      // In production, this would come from an OCR service like Tesseract.js or Google Cloud Vision
+      const mockExtractedText = `
+        ELECTRICITY BILL
+        Account Number: 123456789
+        Billing Period: October 2024
+        Previous Reading: 4500
+        Current Reading: 4850
+        Units Consumed: 350 kWh
+        Rate per Unit: ₹6.50
+        Total Amount: ₹2,275
+        Due Date: 15-Nov-2024
+      `;
+      
+      // Extract electricity units
+      const units = extractElectricityUnits(mockExtractedText);
+      
+      if (units) {
+        setExtractedUnits(units);
+        setResult({
+          type: 'electricity',
+          units: units,
+          extractedText: mockExtractedText,
+          recommendations: [
+            `Found ${units} kWh consumption. This will be used to calculate your carbon footprint.`,
+            'Consider using energy-efficient appliances to reduce consumption.',
+            'Switch to LED bulbs to save up to 80% energy.',
+          ]
+        });
+        ErrorHandler.showSuccess(`Successfully extracted ${units} kWh from bill!`);
+      } else {
+        // Fallback: show generic bill scan result
+        setResult({
+          type: 'generic',
+          message: 'Bill scanned successfully, but could not extract specific data.',
+          recommendations: [
+            'Please manually enter your electricity consumption in the calculator.',
+            'Make sure the bill image is clear and well-lit for better OCR results.',
+          ]
+        });
+        ErrorHandler.showInfo('Bill scanned, but could not extract electricity units. Please enter manually.');
+      }
+    } catch (err) {
+      setError('Failed to process bill. Please try again.');
+      ErrorHandler.showError('Failed to process bill: ' + err.message);
+    } finally {
       setLoading(false);
-    }, 2500);
+    }
   };
 
   const handleReset = () => {
     setFile(null);
     setPreview(null);
     setResult(null);
+    setExtractedUnits(null);
     setError('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const handleUseInCalculator = () => {
+    if (extractedUnits) {
+      // Store units in localStorage for calculator to pick up
+      localStorage.setItem('ocr_extracted_units', extractedUnits.toString());
+      navigate('/dashboard/calculator');
+      ErrorHandler.showSuccess('Opening calculator with extracted data...');
     }
   };
 
@@ -225,65 +300,74 @@ const OCRScanner = () => {
                     Scan Complete! ✅
                   </h3>
                   <p className="white-card-subtitle">
-                    Found {result.totalItems} items on your bill
+                    {result.type === 'electricity' 
+                      ? `Extracted ${result.units} kWh from your electricity bill`
+                      : 'Bill scanned successfully'}
                   </p>
                 </div>
               </div>
-              <div className="white-card-actions">
-                <button
-                  onClick={handleReset}
-                  className="white-card-button white-card-button-primary"
-                >
-                  Scan New Bill
-                </button>
-              </div>
-
-              {/* Total Emissions Card */}
-              <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-6 text-white text-center">
-                <p className="text-sm font-semibold mb-2">Total Carbon Footprint</p>
-                <p className="text-5xl font-bold mb-2">{result.totalEmissions}</p>
-                <p className="text-lg">kg CO₂</p>
-              </div>
-            </div>
-
-            {/* Products List */}
-            <div className="white-card white-card-lg">
-              <div className="white-card-icon-header">
-                <div className="white-card-icon">
-                  <FiFileText size={24} />
-                </div>
-                <div>
-                  <h3 className="white-card-title text-xl">Product Breakdown</h3>
-                  <p className="white-card-subtitle">Individual product emissions</p>
-                </div>
-              </div>
-              <div className="space-y-3">
-                {result.products.map((product, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-xl hover:shadow-md transition-shadow"
+              
+              {result.type === 'electricity' && (
+                <>
+                  {/* Electricity Units Card */}
+                  <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-6 text-white text-center mb-4">
+                    <div className="flex items-center justify-center mb-2">
+                      <FiZap size={32} className="mr-2" />
+                      <p className="text-sm font-semibold">Electricity Consumption</p>
+                    </div>
+                    <p className="text-5xl font-bold mb-2">{result.units}</p>
+                    <p className="text-lg">kWh</p>
+                  </div>
+                  
+                  {/* Use in Calculator Button */}
+                  <div className="white-card-actions">
+                    <button
+                      onClick={handleUseInCalculator}
+                      className="white-card-button white-card-button-primary w-full"
+                    >
+                      Use in Calculator →
+                    </button>
+                    <button
+                      onClick={handleReset}
+                      className="white-card-button white-card-button-secondary"
+                    >
+                      Scan New Bill
+                    </button>
+                  </div>
+                </>
+              )}
+              
+              {result.type === 'generic' && (
+                <div className="white-card-actions">
+                  <button
+                    onClick={handleReset}
+                    className="white-card-button white-card-button-primary"
                   >
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-800 dark:text-white">
-                        {product.name}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {product.category}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                        {product.emissions} kg
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">CO₂</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+                    Scan New Bill
+                  </button>
+                </div>
+              )}
             </div>
+
+            {/* Extracted Text Preview */}
+            {result.extractedText && (
+              <div className="white-card white-card-lg">
+                <div className="white-card-icon-header">
+                  <div className="white-card-icon">
+                    <FiFileText size={24} />
+                  </div>
+                  <div>
+                    <h3 className="white-card-title text-xl">Extracted Text</h3>
+                    <p className="white-card-subtitle">OCR extracted content</p>
+                  </div>
+                </div>
+                <div className="white-card-content">
+                  <pre className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-slate-700 p-4 rounded-lg overflow-auto max-h-48">
+                    {result.extractedText}
+                  </pre>
+                </div>
+              </div>
+            )}
 
             {/* Recommendations */}
             <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900 dark:to-blue-900 dark:bg-opacity-20 border border-green-200 dark:border-green-700 rounded-2xl p-6">

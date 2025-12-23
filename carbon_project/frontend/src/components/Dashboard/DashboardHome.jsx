@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import CarbonFootprintAPI from '../../services/api';
+import localStorageService from '../../services/localStorageService';
 
 const DashboardHome = () => {
   // ==================== STATE MANAGEMENT ====================
@@ -48,11 +49,17 @@ const DashboardHome = () => {
     thisMonthEmissions: 0,
     lastMonthEmissions: 0,
     activeDays: 0,
-    badges: 2,
+    badges: 0,
+    latestEmissions: 0,
+    totalPoints: 0,
+    currentStreak: 0,
   });
   
   // Loading state for data fetching
   const [loading, setLoading] = useState(true);
+  
+  // Load progress from localStorage
+  const [progress, setProgress] = useState(null);
   
   // Profile dropdown state
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -66,20 +73,53 @@ const DashboardHome = () => {
   }, []);
 
   /**
-   * Loads dashboard statistics from API
+   * Loads dashboard statistics from localStorage and API
    */
   const loadDashboardData = async () => {
     try {
-      const api = new CarbonFootprintAPI();
-      const history = await api.getCarbonFootprintHistory();
+      // Load from localStorage first (works offline)
+      const localCalculations = localStorageService.getAllCalculations();
+      const userProgress = localStorageService.getProgress();
       
-      if (history && history.length > 0) {
+      // Update streak on load
+      localStorageService.updateStreak();
+      const updatedProgress = localStorageService.getProgress();
+      setProgress(updatedProgress);
+      
+      // Try to load from API (optional, doesn't block)
+      let apiHistory = [];
+      try {
+        const api = new CarbonFootprintAPI();
+        apiHistory = await api.getCarbonFootprintHistory();
+      } catch (apiError) {
+        console.log('API not available, using local data:', apiError);
+      }
+      
+      // Combine local and API data, prefer local
+      const allCalculations = localCalculations.length > 0 ? localCalculations : apiHistory;
+      
+      if (allCalculations && allCalculations.length > 0) {
         setStats({
-          totalCalculations: history.length,
-          thisMonthEmissions: calculateThisMonth(history),
-          lastMonthEmissions: calculateLastMonth(history),
-          activeDays: calculateActiveDays(history),
-          badges: 2,
+          totalCalculations: allCalculations.length,
+          thisMonthEmissions: calculateThisMonth(allCalculations),
+          lastMonthEmissions: calculateLastMonth(allCalculations),
+          activeDays: calculateActiveDays(allCalculations),
+          badges: updatedProgress?.badges?.length || 0,
+          latestEmissions: allCalculations[0]?.predictedEmissions || 0,
+          totalPoints: updatedProgress?.points || 0,
+          currentStreak: updatedProgress?.currentStreak || 0,
+        });
+      } else {
+        // No calculations yet
+        setStats({
+          totalCalculations: 0,
+          thisMonthEmissions: 0,
+          lastMonthEmissions: 0,
+          activeDays: 0,
+          badges: updatedProgress?.badges?.length || 0,
+          latestEmissions: 0,
+          totalPoints: updatedProgress?.points || 0,
+          currentStreak: updatedProgress?.currentStreak || 0,
         });
       }
     } catch (error) {
@@ -95,8 +135,11 @@ const DashboardHome = () => {
   const calculateThisMonth = (history) => {
     const now = new Date();
     return history
-      .filter(item => new Date(item.calculation_date).getMonth() === now.getMonth())
-      .reduce((sum, item) => sum + (item.total_emissions || 0), 0)
+      .filter(item => {
+        const itemDate = new Date(item.createdAt || item.calculation_date);
+        return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+      })
+      .reduce((sum, item) => sum + (item.predictedEmissions || item.total_emissions || 0), 0)
       .toFixed(2);
   };
 
@@ -107,8 +150,11 @@ const DashboardHome = () => {
     const now = new Date();
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1);
     return history
-      .filter(item => new Date(item.calculation_date).getMonth() === lastMonth.getMonth())
-      .reduce((sum, item) => sum + (item.total_emissions || 0), 0)
+      .filter(item => {
+        const itemDate = new Date(item.createdAt || item.calculation_date);
+        return itemDate.getMonth() === lastMonth.getMonth() && itemDate.getFullYear() === lastMonth.getFullYear();
+      })
+      .reduce((sum, item) => sum + (item.predictedEmissions || item.total_emissions || 0), 0)
       .toFixed(2);
   };
 
@@ -117,7 +163,7 @@ const DashboardHome = () => {
    */
   const calculateActiveDays = (history) => {
     const uniqueDates = new Set(
-      history.map(item => new Date(item.calculation_date).toDateString())
+      history.map(item => new Date(item.createdAt || item.calculation_date).toDateString())
     );
     return uniqueDates.size;
   };
@@ -643,6 +689,39 @@ const DashboardHome = () => {
               </p>
               <p className="white-card-stat-label">
                 Badges earned
+              </p>
+            </div>
+          </div>
+          
+          {/* Additional Stats Row */}
+          <div className="white-card-stats mt-4">
+            {/* Latest Emissions */}
+            <div className="white-card-stat">
+              <p className="white-card-stat-value text-indigo-600">
+                {stats.latestEmissions > 0 ? stats.latestEmissions.toFixed(2) : '0.00'}t
+              </p>
+              <p className="white-card-stat-label">
+                Latest footprint
+              </p>
+            </div>
+
+            {/* Total Points */}
+            <div className="white-card-stat">
+              <p className="white-card-stat-value text-purple-600">
+                {stats.totalPoints}
+              </p>
+              <p className="white-card-stat-label">
+                Total points
+              </p>
+            </div>
+
+            {/* Current Streak */}
+            <div className="white-card-stat">
+              <p className="white-card-stat-value text-orange-600">
+                {stats.currentStreak} 🔥
+              </p>
+              <p className="white-card-stat-label">
+                Day streak
               </p>
             </div>
           </div>

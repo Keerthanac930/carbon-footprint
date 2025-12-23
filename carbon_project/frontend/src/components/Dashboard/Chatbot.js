@@ -2,16 +2,32 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMessageCircle, FiSend, FiX, FiMinimize2, FiMaximize2 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
+import localStorageService from '../../services/localStorageService';
+import carbonCalculationService from '../../services/carbonCalculationService';
 
 const Chatbot = () => {
   const { user } = useAuth();
-  const [messages, setMessages] = useState([
-    { 
-      text: `Hi ${user?.name || 'there'}! 👋 I'm your eco-assistant. Ask me about reducing your carbon footprint, sustainable living tips, or environmental news!`, 
-      sender: 'bot',
-      timestamp: new Date()
+  
+  // Load chat history from localStorage
+  const loadChatHistory = () => {
+    const history = localStorageService.getChatHistory();
+    if (history.length > 0) {
+      return history.map(msg => ({
+        text: msg.message,
+        sender: msg.role === 'user' ? 'user' : 'bot',
+        timestamp: new Date(msg.timestamp)
+      }));
     }
-  ]);
+    return [
+      { 
+        text: `Hi ${user?.name || 'there'}! 👋 I'm your eco-assistant. Ask me about reducing your carbon footprint, sustainable living tips, or environmental news!`, 
+        sender: 'bot',
+        timestamp: new Date()
+      }
+    ];
+  };
+
+  const [messages, setMessages] = useState(loadChatHistory());
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -28,8 +44,20 @@ const Chatbot = () => {
   const getAIResponse = (userMessage) => {
     const lowerMessage = userMessage.toLowerCase();
     
+    // Get latest calculation for personalized advice
+    const latestCalculation = localStorageService.getLatestCalculation();
+    const userProgress = localStorageService.getProgress();
+    
     // Smart response system based on keywords
     if (lowerMessage.includes('reduce') || lowerMessage.includes('lower')) {
+      if (latestCalculation && latestCalculation.breakdown) {
+        const breakdown = latestCalculation.breakdown;
+        const highestCategory = Object.entries(breakdown).reduce((a, b) => 
+          breakdown[a[0]] > breakdown[b[0]] ? a : b
+        );
+        
+        return `Based on your latest calculation, your highest emission source is ${highestCategory[0].replace('_', ' ')} (${highestCategory[1].toFixed(2)}t).\n\nHere are effective ways to reduce your carbon footprint:\n\n🚴 Transportation: Use public transport, carpool, or cycle\n💡 Energy: Switch to LED bulbs and use energy-efficient appliances\n🌱 Food: Reduce meat consumption and buy local produce\n♻️ Waste: Recycle, compost, and reduce single-use plastics\n\nWould you like detailed tips on reducing ${highestCategory[0].replace('_', ' ')} emissions?`;
+      }
       return "Great question! Here are some effective ways to reduce your carbon footprint:\n\n🚴 Transportation: Use public transport, carpool, or cycle\n💡 Energy: Switch to LED bulbs and use energy-efficient appliances\n🌱 Food: Reduce meat consumption and buy local produce\n♻️ Waste: Recycle, compost, and reduce single-use plastics\n\nWould you like detailed tips on any of these areas?";
     } else if (lowerMessage.includes('transport') || lowerMessage.includes('car') || lowerMessage.includes('vehicle')) {
       return "Transportation tips for reducing emissions:\n\n🚗 Share rides with colleagues\n🚌 Use public transportation\n🚲 Bike or walk for short distances\n🚄 Choose trains over flights when possible\n⚡ Consider electric vehicles\n\nEvery kilometer saved makes a difference!";
@@ -59,17 +87,25 @@ const Chatbot = () => {
       timestamp: new Date()
     };
     
+    // Save user message to localStorage
+    localStorageService.saveChatMessage('user', input);
+    
     setMessages([...messages, userMessage]);
     setInput('');
     setIsTyping(true);
 
     // Simulate AI processing time
     setTimeout(() => {
+      const botResponseText = getAIResponse(input);
       const botResponse = {
-        text: getAIResponse(input),
+        text: botResponseText,
         sender: 'bot',
         timestamp: new Date()
       };
+      
+      // Save bot response to localStorage
+      localStorageService.saveChatMessage('assistant', botResponseText);
+      
       setMessages(prev => [...prev, botResponse]);
       setIsTyping(false);
     }, 1000 + Math.random() * 1000);

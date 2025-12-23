@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiHome, FiTrendingUp, FiDollarSign, FiWind, FiZap, FiTrash } from 'react-icons/fi';
 import CarbonFootprintAPI from '../../services/api';
+import carbonCalculationService from '../../services/carbonCalculationService';
+import localStorageService from '../../services/localStorageService';
 
 const CalculatorPage = () => {
   const navigate = useNavigate();
@@ -45,6 +47,16 @@ const CalculatorPage = () => {
       setFormData(defaultFormData);
       localStorage.setItem('calculator_last_reset', loginTime);
     }
+    
+    // Check for OCR extracted units
+    const ocrUnits = localStorage.getItem('ocr_extracted_units');
+    if (ocrUnits) {
+      setFormData(prev => ({
+        ...prev,
+        electricity_usage_kwh: ocrUnits,
+      }));
+      localStorage.removeItem('ocr_extracted_units'); // Clear after use
+    }
   }, [defaultFormData]);
 
   const resetForm = useCallback(() => {
@@ -58,69 +70,99 @@ const CalculatorPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation
+    if (!formData.electricity_usage_kwh || !formData.household_size) {
+      alert('Please fill in required fields: Electricity usage and Household size');
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
-      const api = new CarbonFootprintAPI();
+      // Prepare data for calculation
+      const vehicleType = formData.vehicle_type || 'petrol';
+      const vehicleDistance = Number(formData.vehicle_monthly_distance_km) || 0;
+      const fuelEfficiency = Number(formData.fuel_efficiency) || 15;
+      const fuelUsageLiters = Number(formData.fuel_usage_liters) || (vehicleDistance / fuelEfficiency);
       
-      // Calculate fuel efficiency and usage based on vehicle type if not provided
-      const vehicleType = formData.vehicle_type || 'petrol_sedan';
-      const vehicleDistance = Number(formData.vehicle_monthly_distance_km) || 500;
-      const vehiclesPerHousehold = Number(formData.vehicles_per_household) || 1;
-      
-      // Default fuel efficiency based on vehicle type (km per liter)
-      const fuelEfficiencyDefaults = {
-        'petrol_sedan': 15,
-        'petrol_suv': 12,
-        'diesel': 18,
-        'hybrid': 25,
-        'electric': 0, // No fuel for electric
-        'bicycle': 0
+      // Map vehicle types to calculation service format
+      const vehicleTypeMap = {
+        'petrol_sedan': 'petrol',
+        'petrol_suv': 'petrol',
+        'diesel': 'diesel',
+        'hybrid': 'petrol',
+        'electric': 'electric',
+        'bicycle': 'bicycle'
       };
       
-      // Calculate fuel usage if not provided (liters per month)
-      const fuelEfficiency = Number(formData.fuel_efficiency) || fuelEfficiencyDefaults[vehicleType] || 15;
-      const fuelUsageLiters = vehicleType === 'electric' || vehicleType === 'bicycle' 
-        ? 0 
-        : (Number(formData.fuel_usage_liters) || (vehicleDistance / fuelEfficiency));
+      const mappedVehicleType = vehicleTypeMap[vehicleType] || 'petrol';
+      
+      // Map diet types
+      const dietTypeMap = {
+        'vegetarian': 'vegetarian',
+        'occasional': 'moderate',
+        'regular': 'high'
+      };
+      const mappedDietType = dietTypeMap[formData.meat_consumption] || 'moderate';
 
-      const individualData = {
-        household_size: Number(formData.household_size) || 4,
-        electricity_usage_kwh: Number(formData.electricity_usage_kwh) || 500,
-        home_size_sqft: Number(formData.home_size_sqft) || 1200,
-        home_type: formData.home_type || 'apartment',
-        heating_energy_source: formData.heating_energy_source || 'electric',
-        cooling_energy_source: formData.cooling_energy_source || 'electric',
-        vehicle_type: vehicleType,
-        fuel_type: vehicleType === 'electric' ? 'electric' : vehicleType === 'bicycle' ? 'human_power' : 'petrol',
-        climate_zone: formData.climate_zone || 'temperate',
-        meat_consumption: formData.meat_consumption || 'vegetarian',
-        cooking_method: formData.cooking_method || 'gas',
-        recycling_practice: formData.recycling_practice || 'yes',
-        income_level: formData.income_level || 'medium',
-        location_type: formData.location_type || 'urban',
+      // Calculate using local service (works offline)
+      const calculationInput = {
+        electricity_usage_kwh: Number(formData.electricity_usage_kwh),
         vehicle_monthly_distance_km: vehicleDistance,
-        vehicles_per_household: vehiclesPerHousehold,
-        fuel_efficiency: fuelEfficiency,
+        vehicle_type: mappedVehicleType,
         fuel_usage_liters: fuelUsageLiters,
-        monthly_grocery_bill: Number(formData.monthly_grocery_bill) || 15000,
-        waste_per_person: Number(formData.waste_per_person) || 2,
+        fuel_efficiency: fuelEfficiency,
+        household_size: Number(formData.household_size),
+        home_size_sqft: Number(formData.home_size_sqft) || 0,
+        diet_type: mappedDietType,
+        monthly_grocery_bill: Number(formData.monthly_grocery_bill) || 0,
+        recycling_practice: formData.recycling_practice || 'no',
         air_travel_hours: Number(formData.air_travel_hours) || 0,
-        heating_efficiency: 0.8,
-        cooling_efficiency: 0.7,
-        heating_days: 30,
-        cooling_days: 120,
-        home_age: 10
       };
 
-      const result = await api.predictIndividual(individualData);
-      localStorage.setItem('carbonFootprintResults', JSON.stringify(result));
+      // Calculate locally (primary method - works offline)
+      const calculationResult = carbonCalculationService.calculate(calculationInput);
+      const recommendations = carbonCalculationService.generateRecommendations(calculationResult);
+
+      // Create calculation object
+      const calculation = {
+        id: Date.now().toString(),
+        predictedEmissions: calculationResult.total_emissions_tons,
+        confidenceScore: 0.95, // High confidence for local calculations
+        breakdown: calculationResult.breakdown,
+        recommendations: recommendations,
+        createdAt: new Date().toISOString(),
+        inputData: calculationInput,
+      };
+
+      // Save to local storage
+      localStorageService.saveCalculation(calculation);
+      
+      // Award gamification points
+      localStorageService.awardCalculationPoints();
+
+      // Try to sync with backend (optional, doesn't block)
+      try {
+        const api = new CarbonFootprintAPI();
+        await api.predictIndividual({
+          ...calculationInput,
+          household_size: calculationInput.household_size,
+          electricity_usage_kwh: calculationInput.electricity_usage_kwh,
+        });
+      } catch (apiError) {
+        console.log('Backend sync failed, using local calculation:', apiError);
+        // Continue with local calculation
+      }
+
+      // Store result for results page
+      localStorage.setItem('carbonFootprintResults', JSON.stringify(calculation));
       
       resetForm();
       navigate('/dashboard/results');
     } catch (error) {
       console.error('Error:', error);
-      alert('Calculation failed: ' + error.message);
+      alert('Calculation failed: ' + (error.message || 'Unknown error'));
     } finally {
       setIsSubmitting(false);
     }

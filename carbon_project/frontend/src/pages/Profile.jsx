@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Calendar, Edit2, Save, X } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Edit2, Save, X, Moon, Sun, Trash2, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { useNavigate } from 'react-router-dom';
+import localStorageService from '../services/localStorageService';
+import { ErrorHandler } from '../utils/errorHandler';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || user?.email?.split('@')[0] || '',
@@ -180,24 +186,102 @@ const Profile = () => {
         </div>
       </motion.div>
 
-      {/* Account Stats */}
+      {/* Settings Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
         className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6"
       >
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Settings</h2>
+        
+        {/* Dark Mode Toggle */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-xl mb-4">
+          <div className="flex items-center space-x-3">
+            {isDarkMode ? <Moon size={24} className="text-gray-600 dark:text-gray-300" /> : <Sun size={24} className="text-gray-600 dark:text-gray-300" />}
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-white">Dark Mode</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Toggle between light and dark theme</p>
+            </div>
+          </div>
+          <button
+            onClick={toggleTheme}
+            className={`relative w-14 h-8 rounded-full transition-colors ${
+              isDarkMode ? 'bg-green-500' : 'bg-gray-300'
+            }`}
+          >
+            <div
+              className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform ${
+                isDarkMode ? 'translate-x-6' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Reset Data */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-xl mb-4">
+          <div className="flex items-center space-x-3">
+            <Trash2 size={24} className="text-red-600" />
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-white">Reset All Data</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Clear all calculations and progress</p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              if (window.confirm('Are you sure? This will delete all your calculations and progress.')) {
+                localStorageService.clearAll();
+                ErrorHandler.showSuccess('All data cleared');
+                window.location.reload();
+              }
+            }}
+            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+          >
+            Reset
+          </button>
+        </div>
+
+        {/* Logout */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-xl">
+          <div className="flex items-center space-x-3">
+            <LogOut size={24} className="text-gray-600 dark:text-gray-300" />
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-white">Logout</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Sign out of your account</p>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              await logout();
+              navigate('/login');
+            }}
+            className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Account Stats */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6"
+      >
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Account Statistics</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
             <Calendar className="mx-auto mb-2 text-green-600" size={32} />
-            <p className="text-sm text-gray-600 dark:text-gray-400">Member Since</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">Jan 2024</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Total Calculations</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white">{localStorageService.getCalculationsCount()}</p>
           </div>
           <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
             <User className="mx-auto mb-2 text-blue-600" size={32} />
-            <p className="text-sm text-gray-600 dark:text-gray-400">Account Type</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">Standard</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Member Since</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white">
+              {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A'}
+            </p>
           </div>
           <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
             <Mail className="mx-auto mb-2 text-purple-600" size={32} />

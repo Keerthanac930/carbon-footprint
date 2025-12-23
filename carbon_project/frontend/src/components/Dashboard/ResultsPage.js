@@ -10,6 +10,7 @@ import {
   FiCheckCircle, FiTarget, FiActivity, FiClock, FiArrowLeft
 } from 'react-icons/fi';
 import CarbonFootprintAPI from '../../services/api';
+import localStorageService from '../../services/localStorageService';
 
 const ResultsPage = () => {
   const navigate = useNavigate();
@@ -39,20 +40,36 @@ const ResultsPage = () => {
 
   const loadHistory = async () => {
     try {
-      const api = new CarbonFootprintAPI();
-      const historyData = await api.getCarbonFootprintHistory();
-      if (historyData && Array.isArray(historyData)) {
-        setHistory(historyData);
+      // Load from local storage (primary source)
+      const localCalculations = localStorageService.getAllCalculations();
+      setHistory(localCalculations);
+      
+      // Try to sync with backend (optional)
+      try {
+        const api = new CarbonFootprintAPI();
+        const apiHistory = await api.getCarbonFootprintHistory();
+        if (apiHistory && Array.isArray(apiHistory) && apiHistory.length > 0) {
+          // Merge with local data if needed
+          setHistory(prev => {
+            const combined = [...prev];
+            apiHistory.forEach(apiItem => {
+              if (!combined.find(item => item.id === apiItem.id)) {
+                combined.push(apiItem);
+              }
+            });
+            return combined.sort((a, b) => {
+              const dateA = new Date(a.createdAt || a.calculation_date || 0);
+              const dateB = new Date(b.createdAt || b.calculation_date || 0);
+              return dateB - dateA;
+            });
+          });
+        }
+      } catch (apiError) {
+        console.log('Backend sync failed, using local data:', apiError);
       }
     } catch (error) {
       console.error('Error loading history:', error);
-      // Fallback to localStorage if API fails
-      try {
-        const localHistory = JSON.parse(localStorage.getItem('carbonFootprintHistory') || '[]');
-        setHistory(localHistory);
-      } catch (e) {
-        console.error('Error loading local history:', e);
-      }
+      setHistory([]);
     }
   };
 
@@ -88,131 +105,94 @@ const ResultsPage = () => {
     );
   }
 
-  // Calculate category breakdown - check multiple possible field names
-  const totalEmissions = results.predicted_emissions || results.annual_emissions || results.total_emissions || 0;
+  // Get total emissions (in tons) - handle both API and local calculation formats
+  const totalEmissionsTons = results.predictedEmissions || 
+                              (results.predicted_emissions ? results.predicted_emissions / 1000 : 0) ||
+                              (results.annual_emissions ? results.annual_emissions / 1000 : 0) ||
+                              (results.total_emissions ? results.total_emissions / 1000 : 0) ||
+                              0;
   
-  // Use breakdown from API if available, otherwise use estimated percentages
-  // Note: All values are in kg CO2/year from the API, we convert to tonnes for display
-  let categoryData;
+  // Use breakdown from calculation (already in tons from local service)
+  let categoryData = [];
   if (results.breakdown && Object.keys(results.breakdown).length > 0) {
-    // Use actual breakdown from API (values are in kg, convert to tonnes for display)
-    // Ensure values are numbers and properly converted
     const breakdown = results.breakdown;
-    categoryData = [
-      { 
-        name: 'Transport', 
-        value: parseFloat((breakdown.transportation || 0) / 1000), 
-        rawValue: parseFloat(breakdown.transportation || 0),
-        displayValue: parseFloat((breakdown.transportation || 0) / 1000).toFixed(2),
-        color: '#FF6384' 
-      },
-      { 
-        name: 'Home Energy', 
-        value: parseFloat((breakdown.electricity || 0) / 1000), 
-        rawValue: parseFloat(breakdown.electricity || 0),
-        displayValue: parseFloat((breakdown.electricity || 0) / 1000).toFixed(2),
-        color: '#36A2EB' 
-      },
-      { 
-        name: 'Heating', 
-        value: parseFloat((breakdown.heating || 0) / 1000), 
-        rawValue: parseFloat(breakdown.heating || 0),
-        displayValue: parseFloat((breakdown.heating || 0) / 1000).toFixed(2),
-        color: '#FF9800' 
-      },
-      { 
-        name: 'Waste', 
-        value: parseFloat((breakdown.waste || 0) / 1000), 
-        rawValue: parseFloat(breakdown.waste || 0),
-        displayValue: parseFloat((breakdown.waste || 0) / 1000).toFixed(2),
-        color: '#4BC0C0' 
-      },
-      { 
-        name: 'Lifestyle', 
-        value: parseFloat((breakdown.lifestyle || 0) / 1000), 
-        rawValue: parseFloat(breakdown.lifestyle || 0),
-        displayValue: parseFloat((breakdown.lifestyle || 0) / 1000).toFixed(2),
-        color: '#9C27B0' 
-      },
-      { 
-        name: 'Other', 
-        value: parseFloat((breakdown.other || 0) / 1000), 
-        rawValue: parseFloat(breakdown.other || 0),
-        displayValue: parseFloat((breakdown.other || 0) / 1000).toFixed(2),
-        color: '#607D8B' 
-      },
-    ].filter(item => item.value > 0.01); // Only show categories > 0.01 tonnes
+    const colors = {
+      electricity: '#36A2EB',
+      transportation: '#FF6384',
+      heating: '#FF9800',
+      food: '#FFCE56',
+      waste: '#4BC0C0',
+      lifestyle: '#9C27B0',
+      air_travel: '#00BCD4',
+    };
+    
+    categoryData = Object.entries(breakdown)
+      .map(([key, value]) => ({
+        name: key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' '),
+        value: parseFloat(value) || 0,
+        displayValue: (parseFloat(value) || 0).toFixed(2),
+        color: colors[key] || '#607D8B',
+      }))
+      .filter(item => item.value > 0.01); // Only show categories > 0.01 tonnes
   } else {
-    // Fallback to estimated percentages (totalEmissions is in kg, convert to tonnes)
+    // Fallback to estimated percentages
     categoryData = [
-      { 
-        name: 'Transport', 
-        value: parseFloat(totalEmissions * 0.35 / 1000), 
-        displayValue: (totalEmissions * 0.35 / 1000).toFixed(2),
-        color: '#FF6384' 
-      },
-      { 
-        name: 'Home Energy', 
-        value: parseFloat(totalEmissions * 0.30 / 1000), 
-        displayValue: (totalEmissions * 0.30 / 1000).toFixed(2),
-        color: '#36A2EB' 
-      },
-      { 
-        name: 'Food', 
-        value: parseFloat(totalEmissions * 0.20 / 1000), 
-        displayValue: (totalEmissions * 0.20 / 1000).toFixed(2),
-        color: '#FFCE56' 
-      },
-      { 
-        name: 'Waste', 
-        value: parseFloat(totalEmissions * 0.15 / 1000), 
-        displayValue: (totalEmissions * 0.15 / 1000).toFixed(2),
-        color: '#4BC0C0' 
-      },
+      { name: 'Transport', value: totalEmissionsTons * 0.35, displayValue: (totalEmissionsTons * 0.35).toFixed(2), color: '#FF6384' },
+      { name: 'Home Energy', value: totalEmissionsTons * 0.30, displayValue: (totalEmissionsTons * 0.30).toFixed(2), color: '#36A2EB' },
+      { name: 'Food', value: totalEmissionsTons * 0.20, displayValue: (totalEmissionsTons * 0.20).toFixed(2), color: '#FFCE56' },
+      { name: 'Waste', value: totalEmissionsTons * 0.15, displayValue: (totalEmissionsTons * 0.15).toFixed(2), color: '#4BC0C0' },
     ];
   }
 
-  // Comparison data
+  // Comparison data (values in tons)
   const comparisonData = [
-    { name: 'Your Footprint', value: (totalEmissions / 1000).toFixed(2), color: '#4CAF50' },
+    { name: 'Your Footprint', value: parseFloat(totalEmissionsTons.toFixed(2)), color: '#4CAF50' },
     { name: 'India Avg', value: 1.9, color: '#2196F3' },
     { name: 'Global Avg', value: 4.7, color: '#FF9800' },
   ];
 
-  const isAboveIndiaAvg = (totalEmissions / 1000) > 1.9;
-  const isAboveGlobalAvg = (totalEmissions / 1000) > 4.7;
+  const isAboveIndiaAvg = totalEmissionsTons > 1.9;
+  const isAboveGlobalAvg = totalEmissionsTons > 4.7;
 
-  // Recommendations based on emissions
-  const recommendations = [
-    {
-      icon: FiTrendingDown,
-      title: 'Reduce Transport Emissions',
-      description: 'Consider carpooling, public transport, or cycling for short distances',
-      impact: 'High',
-      color: 'from-red-400 to-red-600'
-    },
-    {
-      icon: FiActivity,
-      title: 'Energy Efficiency',
-      description: 'Switch to LED bulbs and energy-efficient appliances',
-      impact: 'Medium',
-      color: 'from-yellow-400 to-yellow-600'
-    },
-    {
-      icon: FiCheckCircle,
-      title: 'Plant-Based Diet',
-      description: 'Reduce meat consumption and opt for local, seasonal produce',
-      impact: 'High',
-      color: 'from-green-400 to-green-600'
-    },
-    {
-      icon: FiTarget,
-      title: 'Waste Management',
-      description: 'Practice composting and increase recycling efforts',
-      impact: 'Medium',
-      color: 'from-blue-400 to-blue-600'
-    },
-  ];
+  // Use recommendations from calculation if available, otherwise use defaults
+  const recommendations = results.recommendations && results.recommendations.length > 0
+    ? results.recommendations.map(rec => ({
+        icon: FiTarget,
+        title: rec.title || 'Recommendation',
+        description: rec.description || '',
+        impact: rec.priority === 'high' ? 'High' : 'Medium',
+        color: rec.priority === 'high' ? 'from-red-400 to-red-600' : 'from-yellow-400 to-yellow-600'
+      }))
+    : [
+        {
+          icon: FiTrendingDown,
+          title: 'Reduce Transport Emissions',
+          description: 'Consider carpooling, public transport, or cycling for short distances',
+          impact: 'High',
+          color: 'from-red-400 to-red-600'
+        },
+        {
+          icon: FiActivity,
+          title: 'Energy Efficiency',
+          description: 'Switch to LED bulbs and energy-efficient appliances',
+          impact: 'Medium',
+          color: 'from-yellow-400 to-yellow-600'
+        },
+        {
+          icon: FiCheckCircle,
+          title: 'Plant-Based Diet',
+          description: 'Reduce meat consumption and opt for local, seasonal produce',
+          impact: 'High',
+          color: 'from-green-400 to-green-600'
+        },
+        {
+          icon: FiTarget,
+          title: 'Waste Management',
+          description: 'Practice composting and increase recycling efforts',
+          impact: 'Medium',
+          color: 'from-blue-400 to-blue-600'
+        },
+      ];
 
   return (
     <div className="space-y-6 pb-20">
@@ -244,7 +224,7 @@ const ResultsPage = () => {
           </div>
           <div className="text-right">
             <div className="text-6xl font-bold mb-2">
-              {(totalEmissions / 1000).toFixed(2)}
+              {totalEmissionsTons.toFixed(2)}
             </div>
             <div className="text-2xl text-green-50">
               tonnes CO₂/year
@@ -287,10 +267,10 @@ const ResultsPage = () => {
                 {history.map((entry, index) => (
                   <tr key={index} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                      {new Date(entry.calculation_date || entry.date || entry.created_at).toLocaleDateString()}
+                      {new Date(entry.createdAt || entry.calculation_date || entry.date || entry.created_at).toLocaleDateString()}
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                      {((entry.total_emissions || entry.predicted_emissions || entry.footprint || 0) / 1000).toFixed(2)} tonnes
+                      {(entry.predictedEmissions || (entry.total_emissions ? entry.total_emissions / 1000 : 0) || (entry.predicted_emissions ? entry.predicted_emissions / 1000 : 0) || 0).toFixed(2)} tonnes
                     </td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
@@ -346,7 +326,7 @@ const ResultsPage = () => {
             )}
           </div>
           <div className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-            {isAboveIndiaAvg ? '+' : '-'}{Math.abs((totalEmissions / 1000) - 1.9).toFixed(2)} t
+            {isAboveIndiaAvg ? '+' : '-'}{Math.abs(totalEmissionsTons - 1.9).toFixed(2)} t
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             India average: 1.9 tonnes/year
@@ -372,7 +352,7 @@ const ResultsPage = () => {
             )}
           </div>
           <div className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-            {isAboveGlobalAvg ? '+' : '-'}{Math.abs((totalEmissions / 1000) - 4.7).toFixed(2)} t
+            {isAboveGlobalAvg ? '+' : '-'}{Math.abs(totalEmissionsTons - 4.7).toFixed(2)} t
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Global average: 4.7 tonnes/year

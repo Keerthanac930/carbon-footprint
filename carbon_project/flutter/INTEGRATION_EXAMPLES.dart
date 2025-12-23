@@ -362,7 +362,133 @@ class ThemeExamples {
 }
 
 // ============================================================================
-// 9. COMPLETE INTEGRATION EXAMPLE WIDGET
+// 9. QR CODE DOWNLOAD EXAMPLES
+// ============================================================================
+
+class QRDownloadExamples {
+  static void showInstallGuide(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Install App via QR Code'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildStep(
+                  title: '1. Build the APK',
+                  description: 'Run `flutter build apk --release` inside the flutter folder.',
+                ),
+                _buildStep(
+                  title: '2. Generate the QR code',
+                  description:
+                      'Run `python check_and_regenerate_qr.py` (recommended) or `python generate_qr_code.py` '
+                      'from the project root to create `apk_download_qr.png`.',
+                ),
+                _buildStep(
+                  title: '3. Start the local server',
+                  description:
+                      'Execute `python serve_apk.py` or double-click `build_and_serve_apk_qr.bat`. '
+                      'This hosts the APK at http://<your-ip>:8080.',
+                ),
+                _buildStep(
+                  title: '4. Scan & install',
+                  description:
+                      'Open `apk_download_qr.png` on your computer, scan it with your phone camera, and tap download.',
+                ),
+                _buildStep(
+                  title: '5. Allow unknown sources',
+                  description:
+                      'If prompted, allow installs from unknown sources, then open the APK to finish installation.',
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  static void showTroubleshooting(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('QR Download Troubleshooting'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildStep(
+                  title: 'QR opens but fails to load',
+                  description: 'Ensure the download server is running and both devices share the same Wi-Fi network.',
+                ),
+                _buildStep(
+                  title: 'QR shows old IP address',
+                  description: 'Run `python check_and_regenerate_qr.py` to refresh the QR code with the new IP.',
+                ),
+                _buildStep(
+                  title: 'Download blocked',
+                  description:
+                      'Temporarily disable the firewall or allow Python/Flutter through it, then retry scanning the QR code.',
+                ),
+                _buildStep(
+                  title: 'Need a direct link',
+                  description: 'Open http://<your-ip>:8080/info in the phone browser instead of using the QR code.',
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  static Widget _buildStep({
+    required String title,
+    required String description,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            description,
+            style: TextStyle(
+              color: Colors.grey[700],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// 10. COMPLETE INTEGRATION EXAMPLE WIDGET
 // ============================================================================
 
 class CompleteIntegrationExample extends StatelessWidget {
@@ -526,6 +652,23 @@ class IntegrationDemoScreen extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () => VoiceExamples.listenAndProcess(voiceService),
                   child: Text('Listen & Process'),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 16),
+
+            // QR Download Section
+            _buildSection(
+              title: 'Install via QR Code',
+              children: [
+                ElevatedButton(
+                  onPressed: () => QRDownloadExamples.showInstallGuide(context),
+                  child: Text('Show Installation Steps'),
+                ),
+                ElevatedButton(
+                  onPressed: () => QRDownloadExamples.showTroubleshooting(context),
+                  child: Text('Troubleshooting Guide'),
                 ),
               ],
             ),

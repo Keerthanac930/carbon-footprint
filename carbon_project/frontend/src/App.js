@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Layouts
@@ -14,6 +15,7 @@ import Register from './pages/Register';
 import DashboardHome from './components/Dashboard/DashboardHome.jsx';
 import CalculatorPage from './components/Dashboard/CalculatorPage';
 import ResultsPage from './components/Dashboard/ResultsPage';
+import HistoryPage from './components/Dashboard/HistoryPage';
 import NewsFeed from './components/Dashboard/NewsFeed';
 import Rewards from './components/Dashboard/Rewards';
 import OCRScanner from './components/Dashboard/OCRScanner';
@@ -29,8 +31,9 @@ import Profile from './pages/Profile';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
         <Routes>
           {/* Public Routes - Clean gradient backgrounds */}
           <Route path="/" element={<Navigate to="/login" replace />} />
@@ -52,6 +55,7 @@ function App() {
             {/* Core Features */}
             <Route path="calculator" element={<CalculatorPage />} />
             <Route path="results" element={<ResultsPage />} />
+            <Route path="history" element={<HistoryPage />} />
             <Route path="news" element={<NewsFeed />} />
             
             {/* Gamification & Progress */}
@@ -83,7 +87,8 @@ function App() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

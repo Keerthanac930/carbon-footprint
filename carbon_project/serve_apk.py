@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Simple HTTP server to serve APK file over Wi-Fi
 Allows downloading the app on phone without USB
@@ -6,8 +7,15 @@ Allows downloading the app on phone without USB
 import http.server
 import socketserver
 import os
+import sys
 import webbrowser
 from pathlib import Path
+
+# Fix Windows console encoding for emojis
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 # Configuration
 PORT = 8080

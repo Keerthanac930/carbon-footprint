@@ -1,11 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiAward, FiTrendingUp, FiZap, FiTarget, FiStar } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
+import localStorageService from '../../services/localStorageService';
 
 const Rewards = () => {
   const { user } = useAuth();
   const [selectedBadge, setSelectedBadge] = useState(null);
+  const [progress, setProgress] = useState(null);
+
+  useEffect(() => {
+    // Load progress from localStorage
+    const userProgress = localStorageService.getProgress();
+    localStorageService.updateStreak(); // Update streak on load
+    setProgress(userProgress);
+  }, []);
 
   const badges = [
     { 
@@ -85,10 +94,32 @@ const Rewards = () => {
     { title: 'Calculator Pro', description: 'Complete 20 calculations', progress: 8, target: 20, icon: '📊' },
   ];
 
-  const totalPoints = badges.filter(b => b.earned).reduce((sum, b) => sum + b.points, 0);
-  const currentLevel = Math.floor(totalPoints / 100) + 1;
+  // Use real progress data if available
+  const totalPoints = progress?.points || badges.filter(b => b.earned).reduce((sum, b) => sum + b.points, 0);
+  const currentLevel = progress?.level || Math.floor(totalPoints / 100) + 1;
   const nextLevelPoints = currentLevel * 100;
-  const levelProgress = (totalPoints % 100) / 100 * 100;
+  const levelProgress = progress ? ((progress.points % 100) / 100 * 100) : (totalPoints % 100) / 100 * 100;
+  const currentStreak = progress?.currentStreak || 7;
+  const longestStreak = progress?.longestStreak || 7;
+  const earnedBadges = progress?.badges || ['first_step', 'calculator_master'];
+  
+  // Map badge IDs to badge objects
+  const badgeMap = {
+    'first_step': { name: 'First Step', icon: '🌱', level: 1, description: 'Completed your first calculation', points: 50 },
+    'calculator_master': { name: 'Calculator Master', icon: '📊', level: 2, description: 'Completed 10 calculations', points: 100 },
+    'carbon_expert': { name: 'Carbon Expert', icon: '🎓', level: 3, description: 'Completed 50 calculations', points: 150 },
+    'week_warrior': { name: 'Week Warrior', icon: '🔥', level: 2, description: '7-day streak', points: 120 },
+    'month_champion': { name: 'Month Champion', icon: '👑', level: 4, description: '30-day streak', points: 250 },
+  };
+
+  // Update badges list with real data
+  const updatedBadges = badges.map(badge => {
+    const badgeKey = Object.keys(badgeMap).find(key => badgeMap[key].name === badge.name);
+    if (badgeKey && earnedBadges.includes(badgeKey)) {
+      return { ...badge, earned: true };
+    }
+    return badge;
+  });
 
   return (
     <div className="space-y-6">
@@ -136,7 +167,7 @@ const Rewards = () => {
               <FiTrendingUp size={24} />
             </div>
             <div>
-              <h3 className="white-card-title text-3xl">7</h3>
+              <h3 className="white-card-title text-3xl">{currentStreak}</h3>
               <p className="white-card-subtitle">Day Streak 🔥</p>
             </div>
           </div>
@@ -231,7 +262,7 @@ const Rewards = () => {
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {badges.map((badge, index) => (
+          {updatedBadges.map((badge, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, scale: 0.8 }}
